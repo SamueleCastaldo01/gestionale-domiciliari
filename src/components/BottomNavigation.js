@@ -11,10 +11,7 @@ import ContactPageIcon from '@mui/icons-material/ContactPage';
 import { BottomNavigation } from '@mui/material';
 import { styled } from "@mui/material/styles";
 import HomeIcon from '@mui/icons-material/Home';
-import PersonIcon from '@mui/icons-material/Person';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
-import HistoryIcon from '@mui/icons-material/History';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 
 
@@ -95,10 +92,10 @@ return (
         component={Link}
         className="linq"
         value="Schede"
-        to="/schededilavoro"
-        label="Schede"
-        icon={<TaskIcon />}
-        data-selected={location.pathname === '/schededilavoro'}
+        to="/appuntamenti"
+        label="Appuntamenti"
+        icon={<CalendarMonthIcon />}
+        data-selected={location.pathname === '/appuntamenti'}
       />
     )}
 </BottomNavigation>

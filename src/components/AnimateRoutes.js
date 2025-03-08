@@ -1,6 +1,7 @@
 import React from 'react'
 import { useState, useEffect } from "react";
 import Homepage from '../pages/Homepage'
+import Booking from '../pages/Booking'
 import { useSelector } from 'react-redux'; 
 import { CustomerList } from '../pages/CustomerList';
 import Page_per from '../pages/Page_per';
@@ -36,13 +37,11 @@ return (
       {/**qui ci vanno quelli che non servono i permessi, o se ne creano degli altri */}
 
     <Route element={<PrivateRoutes isAuth={isAuth} isAuthUser={isAuthUser}/>}> 
-    <Route element={<PrivatePerm/>}>
-
     <Route path="/" element={<Homepage />} /> 
     <Route path="/customerlist" element={<CustomerList />} /> 
     <Route path="/addcustomer" element={<AddCliente />} /> 
-    
-    </Route>
+    <Route path="/appuntamenti" element={<Booking />} /> 
+
     </Route>
 
 

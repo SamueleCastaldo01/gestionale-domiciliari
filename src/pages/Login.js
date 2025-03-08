@@ -29,7 +29,6 @@ const signInwithGoogle = () => {
       localStorage.setItem("email", email);
       localStorage.setItem("profilePic", profilePic);
       localStorage.setItem("isAuth", true);
-      localStorage.setItem("uid", uid);
 
       // Aggiorna lo stato Redux con email e uid
       dispatch(loginU({ email, uid })); // Passa email e uid all'azione Redux

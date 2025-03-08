@@ -313,3 +313,14 @@ button:active {
 .div-customer {
   border-top: #9BA5AD 1px solid;
 }
+
+.hidden-scrollbar {
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer e Edge */
+}
+
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
