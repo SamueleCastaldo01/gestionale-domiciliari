@@ -79,17 +79,17 @@ return (
         data-selected={location.pathname === '/'} // Aggiunge un attributo per il selezionato
       />
     )}
-    {isAuth && (
-      <BottomNavigationAction
-        component={Link}
-        className="linq"
-        value="Sched"
-        to="/customerlist"
-        label="Pazienti"
-        icon={<ContactPageIcon />}
-        data-selected={location.pathname === '/customerlist'}
-      />
-    )}
+{isAuth && (
+  <BottomNavigationAction
+    component={Link}
+    className="linq"
+    value="Sched"
+    to="/customerlist"
+    label="Pazienti"
+    icon={<ContactPageIcon />}
+    data-selected={location.pathname === '/customerlist' || location.pathname === '/addcustomer'}
+  />
+)}
     {isAuth && (
       <BottomNavigationAction
         component={Link}

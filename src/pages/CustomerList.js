@@ -12,9 +12,12 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { StyledDataGrid, theme } from '../components/StyledDataGrid';
 import { EditCliente } from '../components/EditCliente';
 import { NavMobile } from '../components/NavMobile';
+import { useSelector } from 'react-redux';
 
 export function CustomerList() {
   const matches = useMediaQuery("(max-width:920px)");
+  const user = useSelector((state) => state.auth.user);
+  const uid = user?.uid;
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({});
@@ -44,15 +47,15 @@ export function CustomerList() {
       const lowerCaseCognome = searchCognome ? searchCognome.toLowerCase() : null;
       if (searchPhone && searchType == "phone") {
         // Filtro per numero di telefono
-        customerQuery = query(customerCollection, where("telefono", "==", searchPhone));
+        customerQuery = query(customerCollection,where("uid", "==", uid), where("telefono", "==", searchPhone));
       } else if(searchNome && searchType == "nome") {
-        customerQuery = query(customerCollection, where("nome", "==", searchNome));
+        customerQuery = query(customerCollection,where("uid", "==", uid), where("nome", "==", searchNome));
       } else if(searchCognome && searchType == "cognome") {
-        customerQuery = query(customerCollection, where("cognome", "==", searchCognome));
+        customerQuery = query(customerCollection, where("uid", "==", uid), where("cognome", "==", searchCognome));
       }
       else {
         // Crea una query per ordinare per dataCreazione in ordine decrescente se non c'è il filtro
-        customerQuery = query(customerCollection, orderBy("dataCreazione", "desc"), limit(100));
+        customerQuery = query(customerCollection,where("uid", "==", uid), orderBy("dataCreazione", "desc"));
       }
   
       const customerSnapshot = await getDocs(customerQuery);
