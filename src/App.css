@@ -305,3 +305,11 @@ button:active {
   position: relative;
   top: 8.5px;
 }
+
+.customer{
+  border-bottom: #9BA5AD 1px solid;
+}
+
+.div-customer {
+  border-top: #9BA5AD 1px solid;
+}

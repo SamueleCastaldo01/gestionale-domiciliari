@@ -52,6 +52,11 @@ export function AddCliente() {
           .join(' '); // Riunisce le parole in una stringa
       };
 
+      
+  const toUpperCaseWords = (str) => {
+    return str.toUpperCase(); 
+  };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         const cfExists = await checkCfExists(codiceFiscale);
@@ -92,7 +97,7 @@ export function AddCliente() {
 
     return (
         <>
-        {matches && <NavMobile text= "Aggiungi Paziente" />}
+        {matches && <NavMobile text= "Aggiungi un paziente" />}
        
         <motion.div
             initial={{ opacity: 0 }}
@@ -121,7 +126,9 @@ export function AddCliente() {
                             />
                         </div>
                         <div className='d-flex mt-4 col-lg-4 col-md-6 col-sm-12'>
-                            <TextField className='w-100' label="Codice Fiscale" variant="outlined" required color='primary' value={codiceFiscale} onChange={(e) => setCodiceFiscale(e.target.value)} />
+                            <TextField className='w-100' label="Codice Fiscale" variant="outlined" required color='primary' value={codiceFiscale}  onChange={(e) => {
+                                const formattedCognome = toUpperCaseWords(e.target.value); 
+                                setCodiceFiscale(formattedCognome); }}    />
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                             <TextField className='w-100' type='number' label="Numero di Telefono" variant="outlined" color='primary' value={telefono} onChange={(e) => setTelefono(e.target.value)} />

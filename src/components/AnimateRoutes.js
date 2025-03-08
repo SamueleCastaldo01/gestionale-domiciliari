@@ -3,10 +3,6 @@ import { useState, useEffect } from "react";
 import Homepage from '../pages/Homepage'
 import { useSelector } from 'react-redux'; 
 import { CustomerList } from '../pages/CustomerList';
-import { DashboardCustomer } from '../pages/DashboardCustomer';
-import { SchedeDiLavoro } from '../pages/SchedeDiLavoro';
-import { AddSchede } from '../pages/AddSchede';
-import AggiungiScheda from './AggiungiScheda';
 import Page_per from '../pages/Page_per';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation} from "react-router-dom";
 import {PrivateRoutes, PrivatePerm, PrivateRoutesUser} from '../components/PrivateRoutes';
@@ -14,8 +10,6 @@ import { AnimatePresence } from 'framer-motion';
 import moment from 'moment/moment';
 import 'moment/locale/it'
 import { AddCliente } from '../pages/AddCliente';
-
-import { StampaScheda } from '../pages/StampaScheda ';
 import Login from '../pages/Login';
 
 
@@ -47,11 +41,6 @@ return (
     <Route path="/" element={<Homepage />} /> 
     <Route path="/customerlist" element={<CustomerList />} /> 
     <Route path="/addcustomer" element={<AddCliente />} /> 
-    <Route path="/dashboardcustomer/:id" element={<DashboardCustomer />} /> 
-    <Route path="/schededilavoro" element={<SchedeDiLavoro />} /> 
-    <Route path="/aggiungischeda" element={<AddSchede />} /> 
-    <Route path="/aggiungischeda1/:id" element={<AggiungiScheda />} /> 
-    <Route path="/stampascheda/:id" element={<StampaScheda />} /> 
     
     </Route>
     </Route>
