@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { db } from "../firebase-config";
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { collection, getDocs, deleteDoc, doc, orderBy, query, where, getDoc, limit, updateDoc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, orderBy, query, where, getDoc, updateDoc } from "firebase/firestore";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { StyledDataGrid, theme } from '../components/StyledDataGrid';
 import { EditCliente } from '../components/EditCliente';
