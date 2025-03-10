@@ -23,6 +23,8 @@ export function AddCliente() {
     const [nome, setNome] = useState('');
     const [cognome, setCognome] = useState('');
     const [indirizzo, setIndirizzo] = useState('');
+    const [dataInizioPai, setDataInizioPai] = useState('');
+    const [dataFinePai, setDataFinePai] = useState('');
     const [dataNascita, setDataNascita] = useState('');
     const [codiceFiscale, setCodiceFiscale] = useState('');
     const [telefono, setTelefono] = useState('');
@@ -66,6 +68,8 @@ export function AddCliente() {
         }
     
         const formattedDataNascita = moment(dataNascita).format('DD-MM-YYYY');
+        const formattedDataFinePai = moment(dataFinePai).format('DD-MM-YYYY');
+        const formattedDataInizioPai = moment(dataInizioPai).format('DD-MM-YYYY');
     
         try {
             await addDoc(collection(db, 'customersTab'), {
@@ -74,6 +78,8 @@ export function AddCliente() {
                 cognome,
                 gender,
                 indirizzo,
+                dataInizioPai: formattedDataInizioPai,
+                dataFinePai: formattedDataFinePai,
                 dataNascita: formattedDataNascita,
                 codiceFiscale,
                 telefono,
@@ -132,6 +138,12 @@ export function AddCliente() {
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                             <TextField className='w-100' type='number' label="Numero di Telefono" variant="outlined" color='primary' value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+                        </div>
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                            <TextField className='w-100' type='date' label="Inizio Pai" variant="outlined" color='primary' value={dataInizioPai} onChange={(e) => setDataInizioPai(e.target.value)} InputLabelProps={{ shrink: true }} />
+                        </div>
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                            <TextField className='w-100' type='date' label="Fine Pai" variant="outlined" color='primary' value={dataFinePai} onChange={(e) => setDataFinePai(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </div>
 
                         {/* Optional Fields Section */}

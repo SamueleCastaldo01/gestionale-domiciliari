@@ -12,6 +12,7 @@ import moment from 'moment/moment';
 import 'moment/locale/it'
 import { AddCliente } from '../pages/AddCliente';
 import Login from '../pages/Login';
+import { AddBooking } from '../pages/AddBooking';
 
 
 function AnimateRoutes ()  {
@@ -41,6 +42,7 @@ return (
     <Route path="/customerlist" element={<CustomerList />} /> 
     <Route path="/addcustomer" element={<AddCliente />} /> 
     <Route path="/appuntamenti" element={<Booking />} /> 
+    <Route path="/addbooking" element={<AddBooking />} />
 
     </Route>
 
