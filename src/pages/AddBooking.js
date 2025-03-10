@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useSelector } from 'react-redux';
-import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'; // Import dropdown icon
 import { db } from '../firebase-config';
 import { collection, addDoc, query, where, getDocs, Timestamp, orderBy  } from 'firebase/firestore';
@@ -24,6 +24,7 @@ export function AddBooking() {
     const time = queryParams.get("time");
     const [pazienti, setPazienti] = useState([]);
     const [loadingAutoComplete, setLoadingAutocomplete] = useState(true);
+    const [selectedCustomerId, setSelectedCustomerId] = useState(null);
     const navigate = useNavigate();
     const [durata, setDurata] = useState(30);
     const [showOptionalFields, setShowOptionalFields] = useState(false); // State for optional fields
@@ -32,6 +33,10 @@ export function AddBooking() {
         setDurata(event.target.value);
     };
 
+    const onCustomerSelect = (id) => {
+        setSelectedCustomerId(id);
+      };
+
       const fetchCustomers = async () => {
         try {
           setLoadingAutocomplete(true); // Inizia il caricamento
@@ -39,8 +44,6 @@ export function AddBooking() {
       
           let customerQuery;
             customerQuery = query(customerCollection,where("uid", "==", uid), orderBy("nome", "asc"));
-       
-      
           const customerSnapshot = await getDocs(customerQuery);
           const customerList = customerSnapshot.docs.map((doc) => ({
             id: doc.id,
@@ -60,7 +63,7 @@ export function AddBooking() {
       }, [])
 
 
-      
+
     const handleReset = () => {
        setDurata(30);
     };
@@ -119,7 +122,45 @@ export function AddBooking() {
                 <form onSubmit={handleSubmit}>
                     <div className='row'>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
-                            
+                        <Autocomplete
+                            options={pazienti}
+                            loading={loadingAutoComplete}
+                            getOptionLabel={(option) => `${option.nome} ${option.cognome}`}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id}>
+                                <Box>
+                                    <Typography variant="body1">
+                                    {option.nome} {option.cognome}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                    {option.codiceFiscale}
+                                    </Typography>
+                                </Box>
+                                </li>
+                            )}
+                            onChange={(event, value) => {
+                                if (value) {
+                                onCustomerSelect(value.id);
+                                }
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                {...params}
+                                label="Seleziona pazienti"
+                                variant="outlined"
+                                fullWidth
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                    <>
+                                        {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                    ),
+                                }}
+                                />
+                            )}
+                            />
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                             <FormControl fullWidth color='primary'>
