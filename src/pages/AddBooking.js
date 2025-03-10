@@ -11,7 +11,7 @@ import { collection, addDoc, query, where, getDocs, Timestamp, orderBy} from 'fi
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useLocation } from "react-router-dom";
-import { notifyErrorAddCliente, notifyErrorAddUsername, successAddCliente, successNoty } from '../components/Notify';
+import { notifyError, notifyErrorAddCliente, notifyErrorAddUsername, successAddCliente, successNoty } from '../components/Notify';
 import { NavMobile } from '../components/NavMobile';
 
 export function AddBooking() {
@@ -25,8 +25,11 @@ export function AddBooking() {
     const [selectedDate, setSelectedDate] = useState(date);
     const [selectedTime, setSelectedTime] = useState(time);
     const [pazienti, setPazienti] = useState([]);
+    const [prestazioni, setPrestazioni] = useState([]);
+    const [note, setNote] = useState("");
     const [loadingAutoComplete, setLoadingAutocomplete] = useState(true);
     const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+    const [selectedPrestazioniId, setSelectedPrestazioniId] = useState(null);
     const navigate = useNavigate();
     const [durata, setDurata] = useState(30);
     const [showOptionalFields, setShowOptionalFields] = useState(false); // State for optional fields
@@ -45,6 +48,10 @@ export function AddBooking() {
 
     const onCustomerSelect = (id) => {
         setSelectedCustomerId(id);
+      };
+
+      const onPrestazioniSelect = (id) => {
+        setSelectedPrestazioniId(id);
       };
 
       const fetchCustomers = async () => {
@@ -68,7 +75,29 @@ export function AddBooking() {
         }
       };
 
+      const fetchPrestazioni = async () => {
+        try {
+          setLoadingAutocomplete(true); // Inizia il caricamento
+          const customerCollection = collection(db, "prestazioneTab");
+      
+          let customerQuery;
+            customerQuery = query(customerCollection,where("uid", "==", uid));
+          const customerSnapshot = await getDocs(customerQuery);
+          const prestazioniList = customerSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+      
+          setPrestazioni(prestazioniList);
+        } catch (error) {
+          console.error("Errore nel recupero delle prestazioni: ", error);
+        } finally {
+          setLoadingAutocomplete(false); // Termina il caricamento
+        }
+      };
+
       useEffect(() => {
+        fetchPrestazioni();
         fetchCustomers();
       }, [])
 
@@ -78,35 +107,90 @@ export function AddBooking() {
        setDurata(30);
     };
 
-    const capitalizeWords = (str) => {
-        return str
-          .toLowerCase() // Converte l'intera stringa in minuscolo
-          .split(' ') // Divide la stringa in parole
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalizza la prima lettera di ogni parola
-          .join(' '); // Riunisce le parole in una stringa
-      };
 
-      
-  const toUpperCaseWords = (str) => {
-    return str.toUpperCase(); 
-  };
+    const calculateEndTime = (startTime, duration) => {
+        if (!startTime) return "";
+        return moment(startTime, "HH:mm").add(duration, "minutes").format("HH:mm");
+    };
+    
 
     const handleSubmit = async (event) => {
         event.preventDefault();
     
+        if (!selectedCustomerId) {
+            notifyError("Aggiungi il paziente");
+            return;
+        }
+        if (!selectedPrestazioniId) {
+            notifyError("Aggiungi la prestazione");
+            return;
+        }
+    
+        const oraFine = calculateEndTime(selectedTime, durata);
+        const selectedCustomer = pazienti.find(paziente => paziente.id === selectedCustomerId);
+        const nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
+        const selectedPrestazione = prestazioni.find(prestazione => prestazione.id === selectedPrestazioniId);
+        const nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
+    
+        // Funzione per convertire una stringa "HH:mm" in minuti
+        const convertTimeToMinutes = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        };
+    
+        const newStart = convertTimeToMinutes(selectedTime);
+        const newEnd = convertTimeToMinutes(oraFine);
+    
+        const q = query(
+            collection(db, 'bookingTab'),
+            where('uid', '==', uid),
+            where('giorno', '==', selectedDate)
+        );
+
+    
+        const querySnapshot = await getDocs(q);
+        let conflict = false;
+    
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            // Assumendo che gli orari siano salvati in formato "HH:mm"
+            const existingStart = convertTimeToMinutes(data.ora);
+            const existingEnd = convertTimeToMinutes(data.oraFine);
+    
+            // Verifica se il nuovo orario di inizio cade nell'intervallo di un appuntamento esistente
+            if (newStart >= existingStart && newStart < existingEnd) {
+                conflict = true;
+            }
+        });
+    
+        if (conflict) {
+            notifyError("Orario già occupato da un altro appuntamento");
+            return;
+        }
+    
         try {
-            await addDoc(collection(db, 'customersTab'), {
+            await addDoc(collection(db, 'bookingTab'), {
                 uid,
                 durata,
-                dataCreazione: Timestamp.fromDate(new Date()), // Aggiungi la data di creazione
+                pazienteId: selectedCustomerId,
+                nomeCompleto,
+                prestazioniId: selectedPrestazioniId,
+                nomePrestazione,
+                giorno: selectedDate,
+                ora: selectedTime,
+                oraFine,
+                note,
+                dataCreazione: Timestamp.fromDate(new Date()),
             });
+    
             handleReset();
-            navigate("/customerlist");
-            successNoty("Paziente Aggiunto!");
+            navigate("/appuntamenti");
+            successNoty("Appuntamento Aggiunto!");
         } catch (error) {
-            console.error('Errore nell\'aggiunta del cliente: ', error);
+            console.error('Errore nell\'aggiunta dell\'appuntamento: ', error);
         }
     };
+    
 
     return (
         <>
@@ -165,6 +249,19 @@ export function AddBooking() {
                             )}
                             />
                         </div>
+                        <h6 className='mb-0 mt-4'>Dettagli della Visita</h6>
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3'>
+                            <TextField className='w-100' label="Giorno" type="date" value={selectedDate} onChange={handleChange}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                            <TextField className='w-100' label="Ora" type="time" value={selectedTime} onChange={handleChangeTime}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                        </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                             <FormControl fullWidth color='primary'>
                                 <InputLabel id="durata-select-label">Durata</InputLabel>
@@ -181,16 +278,53 @@ export function AddBooking() {
                                 </Select>
                             </FormControl>
                         </div>
-                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3'>
-                            <TextField className='w-100' label="Giorno" type="date" value={selectedDate} onChange={handleChange}
-                                InputLabelProps={{
-                                    shrink: true,
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                        <Autocomplete
+                            options={prestazioni}
+                            loading={loadingAutoComplete}
+                            getOptionLabel={(option) => `${option.prestazioni}`}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id}>
+                                <Box>
+                                    <Typography variant="body1">
+                                    {option.prestazioni}
+                                    </Typography>
+                                </Box>
+                                </li>
+                            )}
+                            onChange={(event, value) => {
+                                if (value) {
+                                onPrestazioniSelect(value.id);
+                                }
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                {...params}
+                                label="Prestazioni"
+                                variant="outlined"
+                                fullWidth
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                    <>
+                                        {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                    ),
                                 }}
+                                />
+                            )}
                             />
-                            <TextField className='w-100' label="Ora" type="time" value={selectedTime} onChange={handleChangeTime}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
+                        </div>
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                            <TextField
+                                label="Note"
+                                variant="outlined"
+                                fullWidth
+                                multiline
+                                rows={2}
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
                             />
                         </div>
          
@@ -216,7 +350,7 @@ export function AddBooking() {
                             </Collapse>
                         </div>
                     </div>
-                    <Button className='mt-4 w-100 py-2' type="submit" variant="contained">Aggiungi Appuntamenti</Button>
+                    <Button className='mt-4 w-100 py-2' type="submit" variant="contained">Aggiungi Appuntamento</Button>
                 </form>
             </div>
         </motion.div>

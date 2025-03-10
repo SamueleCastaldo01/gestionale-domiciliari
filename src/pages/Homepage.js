@@ -42,6 +42,7 @@ function Homepage ()  {
           <div className='d-flex gap-3'>
             <Button style={{width: "200px", height: "70px"}} variant="contained" onClick={()=> {navigate("/customerlist")}}>Clienti</Button>
             <Button style={{width: "200px", height: "70px"}} variant="contained" onClick={()=> {navigate("/schededilavoro")}}>Schede</Button>
+            <Button style={{width: "200px", height: "70px"}} variant="contained" onClick={()=> {navigate("/addprestazioni")}}>Prestazioni</Button>
           </div>
        
         </div>

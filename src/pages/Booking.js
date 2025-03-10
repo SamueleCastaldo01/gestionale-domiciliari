@@ -13,7 +13,7 @@ function Booking() {
   const user = useSelector((state) => state.auth.user);
   const uid = user?.uid;
 
-  // Imposta la data odierna come valore iniziale (come oggetto dayjs)
+  // Imposta la data odierna come valore iniziale (oggetto dayjs)
   const [selectedDate, setSelectedDate] = useState(dayjs());
 
   let navigate = useNavigate();
@@ -33,11 +33,10 @@ function Booking() {
             onDateSelect={setSelectedDate}
           />
 
-
           <div className="mt-4">
-            <DailySchedule selectedDate={selectedDate} />
+            {/* Passiamo anche uid così che DailySchedule possa filtrare le prenotazioni */}
+            <DailySchedule selectedDate={selectedDate} uid={uid} />
           </div>
-          
         </div>
       </motion.div>
     </>

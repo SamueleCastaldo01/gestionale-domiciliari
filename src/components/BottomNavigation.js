@@ -95,7 +95,7 @@ return (
         to="/appuntamenti"
         label="Appuntamenti"
         icon={<CalendarMonthIcon />}
-        data-selected={location.pathname === '/appuntamenti'}
+        data-selected={location.pathname === '/appuntamenti' || location.pathname === '/addbooking'}
       />
     )}
 </BottomNavigation>

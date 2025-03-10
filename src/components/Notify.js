@@ -1,7 +1,7 @@
 import { toast, Slide } from 'react-toastify';
 
-export function notifyError () {
-    toast.error('Inserisci una data', {
+export function notifyError (text) {
+    toast.error(text, {
         position: "top-center",
         autoClose: false,
         hideProgressBar: false,

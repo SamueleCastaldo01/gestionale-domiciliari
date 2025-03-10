@@ -105,7 +105,7 @@ function App() {
         onClose={() => setShowInstallPrompt(false)}
         message="Vuoi installare questa app?"
         action={
-          <Button color="secondary" onClick={handleInstallClick}>
+          <Button color="primary" onClick={handleInstallClick}>
             Installa
           </Button>
         }
