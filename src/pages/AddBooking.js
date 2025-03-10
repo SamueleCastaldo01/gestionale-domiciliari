@@ -117,7 +117,7 @@ export function AddBooking() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7 }}
             className='overflow-auto'
-            style={{ minHeight: "100vh" }}  // Assicura lo scrolling
+            style={{ minHeight: "80vh" }}  // Assicura lo scrolling
         >
             <div className='container-fluid'>
                 {!matches && <h2 className='titlePage'>Aggiungi un nuovo Paziente</h2>}
