@@ -98,13 +98,6 @@ export function AddBooking() {
         }
     };
 
-    const checkCfExists = async (codiceFiscale) => {
-        const q = query(collection(db, 'customersTab'), where('codiceFiscale', '==', codiceFiscale));
-        const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
-    };
-
-
     return (
         <>
         {matches && <NavMobile text= "Aggiungi un appuntamento" />}
