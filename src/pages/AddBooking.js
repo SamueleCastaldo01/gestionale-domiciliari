@@ -149,7 +149,7 @@ export function AddBooking() {
                             renderInput={(params) => (
                                 <TextField
                                 {...params}
-                                label="Seleziona pazienti"
+                                label="Seleziona paziente"
                                 variant="outlined"
                                 fullWidth
                                 InputProps={{
