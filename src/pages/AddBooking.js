@@ -182,7 +182,7 @@ export function AddBooking() {
                             </FormControl>
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3'>
-                            <TextField className='w-100' label="Data" type="date" value={selectedDate} onChange={handleChange}
+                            <TextField className='w-100' label="Giorno" type="date" value={selectedDate} onChange={handleChange}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
