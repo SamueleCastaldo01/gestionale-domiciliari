@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'; // Import dropdown icon
 import { db } from '../firebase-config';
-import { collection, addDoc, query, where, getDocs, Timestamp, orderBy  } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, Timestamp, orderBy} from 'firebase/firestore';
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useLocation } from "react-router-dom";
@@ -22,6 +22,8 @@ export function AddBooking() {
     const queryParams = new URLSearchParams(location.search);
     const date = queryParams.get("date");
     const time = queryParams.get("time");
+    const [selectedDate, setSelectedDate] = useState(date);
+    const [selectedTime, setSelectedTime] = useState(time);
     const [pazienti, setPazienti] = useState([]);
     const [loadingAutoComplete, setLoadingAutocomplete] = useState(true);
     const [selectedCustomerId, setSelectedCustomerId] = useState(null);
@@ -31,6 +33,14 @@ export function AddBooking() {
 
     const handledurataChange = (event) => {
         setDurata(event.target.value);
+    };
+
+    const handleChange = (event) => {
+        setSelectedDate(event.target.value);
+      };
+    
+    const handleChangeTime = (event) => {
+        setSelectedTime(event.target.value);
     };
 
     const onCustomerSelect = (id) => {
@@ -170,6 +180,18 @@ export function AddBooking() {
                                     <MenuItem value={60}>60 min</MenuItem>
                                 </Select>
                             </FormControl>
+                        </div>
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3'>
+                            <TextField className='w-100' label="Data" type="date" value={selectedDate} onChange={handleChange}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                            <TextField className='w-100' label="Ora" type="time" value={selectedTime} onChange={handleChangeTime}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
                         </div>
          
 
