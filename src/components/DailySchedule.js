@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -10,7 +10,7 @@ const DailySchedule = ({ selectedDate, uid }) => {
   const [bookings, setBookings] = useState([]);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
-  const [loading, setLoading] = useState(true); // Aggiungi lo stato per il loading
+  const [loading, setLoading] = useState(true);
 
   // Fetch degli appuntamenti per la data e l'utente selezionato
   useEffect(() => {
@@ -32,7 +32,7 @@ const DailySchedule = ({ selectedDate, uid }) => {
       } catch (error) {
         console.error("Errore nel fetch delle prenotazioni: ", error);
       } finally {
-        setLoading(false); // Disattiva il loading quando la fetch è terminata
+        setLoading(false);
       }
     };
 
@@ -41,23 +41,41 @@ const DailySchedule = ({ selectedDate, uid }) => {
     }
   }, [selectedDate, uid]);
 
-  // Genera le fasce orarie da start a end con un intervallo in minuti
-  const generateTimeSlots = (start, end, interval) => {
-    const slots = [];
-    let current = start;
-    while (current.isBefore(end) || current.isSame(end)) {
-      slots.push(current);
-      current = current.add(interval, "minute");
-    }
-    return slots;
+  // Helper per convertire una stringa oraria ("HH:mm") in un oggetto dayjs basato sulla data selezionata
+  const parseTime = (timeStr) => {
+    const [hour, minute] = timeStr.split(":");
+    return selectedDate.hour(Number(hour)).minute(Number(minute)).second(0);
   };
 
-  // Imposta l’orario di inizio e fine della giornata selezionata
-  const startTime = selectedDate.hour(9).minute(0).second(0);
-  const endTime = selectedDate.hour(19).minute(0).second(0);
-  const timeSlots = generateTimeSlots(startTime, endTime, 45);
+  // Genera gli slot orari in modo dinamico
+  const dynamicTimeSlots = useMemo(() => {
+    const slots = [];
+    // Imposta orari di inizio e fine giornata
+    let current = selectedDate.hour(9).minute(0).second(0);
+    const endTime = selectedDate.hour(19).minute(0).second(0);
+    // Ordina le prenotazioni per ora di inizio
+    const sortedBookings = bookings.slice().sort((a, b) => {
+      return parseTime(a.ora).diff(parseTime(b.ora));
+    });
+    // Ciclo fino al termine della giornata
+    while (current.isBefore(endTime) || current.isSame(endTime)) {
+      slots.push(current);
+      // Cerca se esiste una prenotazione che inizia esattamente a questo orario
+      const bookingForSlot = sortedBookings.find(
+        (booking) => booking.ora === current.format("HH:mm")
+      );
+      if (bookingForSlot && bookingForSlot.oraFine) {
+        // Se esiste, imposta il prossimo slot all'orario di fine dell'appuntamento
+        current = parseTime(bookingForSlot.oraFine);
+      } else {
+        // Altrimenti, aggiungi 45 minuti di default
+        current = current.add(45, "minute");
+      }
+    }
+    return slots;
+  }, [bookings, selectedDate]);
 
-  // Funzione per navigare alla pagina di creazione appuntamento
+  // Naviga alla pagina di creazione prenotazione passando data e orario
   const handleAdd = (timeSlot) => {
     navigate(
       `/addbooking?date=${selectedDate.format("YYYY-MM-DD")}&time=${timeSlot.format("HH:mm")}`
@@ -74,7 +92,6 @@ const DailySchedule = ({ selectedDate, uid }) => {
   const handleConfirmDelete = async () => {
     try {
       await deleteDoc(doc(db, 'bookingTab', bookingToDelete.id));
-      // Aggiorna lo stato filtrando via il booking eliminato
       setBookings(bookings.filter(b => b.id !== bookingToDelete.id));
       setOpenDeleteDialog(false);
       setBookingToDelete(null);
@@ -92,13 +109,12 @@ const DailySchedule = ({ selectedDate, uid }) => {
   return (
     <div style={{ height: "100%", overflowY: "auto" }}>
       {loading ? (
-        // Mostra il CircularProgress quando la fetch è in corso
         <div style={{ textAlign: "center", padding: "50px" }}>
           <CircularProgress />
         </div>
       ) : (
-        timeSlots.map((timeSlot) => {
-          // Controlla se esiste un appuntamento che inizia in questa fascia oraria
+        dynamicTimeSlots.map((timeSlot) => {
+          // Verifica se esiste una prenotazione che inizia in questo slot
           const bookingForSlot = bookings.find(
             (booking) => booking.ora === timeSlot.format("HH:mm")
           );
@@ -113,8 +129,6 @@ const DailySchedule = ({ selectedDate, uid }) => {
                 {timeSlot.format("HH:mm")}
               </Typography>
               {bookingForSlot ? (
-                // Se esiste una prenotazione, mostra i dettagli:
-                // il nome del paziente e l'orario di fine dell'appuntamento
                 <div className="w-100">
                   <Typography className="fw-bold" style={{ color: "#037e67" }} variant="body1">
                     {bookingForSlot.nomeCompleto}
@@ -124,7 +138,6 @@ const DailySchedule = ({ selectedDate, uid }) => {
                   </Typography>
                 </div>
               ) : (
-                // Se non esiste, mostra il pulsante per aggiungere la prenotazione
                 <Button
                   className="w-100"
                   variant="outlined"
