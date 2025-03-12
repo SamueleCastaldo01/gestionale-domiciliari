@@ -11,7 +11,7 @@ import { collection, addDoc, query, where, getDocs, Timestamp, orderBy} from 'fi
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useLocation } from "react-router-dom";
-import { notifyError, notifyErrorAddCliente, notifyErrorAddUsername, successAddCliente, successNoty } from '../components/Notify';
+import { notifyError, successNoty } from '../components/Notify';
 import { NavMobile } from '../components/NavMobile';
 
 export function AddBooking() {
@@ -129,6 +129,7 @@ export function AddBooking() {
         const oraFine = calculateEndTime(selectedTime, durata);
         const selectedCustomer = pazienti.find(paziente => paziente.id === selectedCustomerId);
         const nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
+        const linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
         const selectedPrestazione = prestazioni.find(prestazione => prestazione.id === selectedPrestazioniId);
         const nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
     
@@ -139,7 +140,6 @@ export function AddBooking() {
         };
     
         const newStart = convertTimeToMinutes(selectedTime);
-        const newEnd = convertTimeToMinutes(oraFine);
     
         const q = query(
             collection(db, 'bookingTab'),
@@ -174,6 +174,7 @@ export function AddBooking() {
                 durata,
                 pazienteId: selectedCustomerId,
                 nomeCompleto,
+                linkIndirizzo,
                 prestazioniId: selectedPrestazioniId,
                 nomePrestazione,
                 giorno: selectedDate,

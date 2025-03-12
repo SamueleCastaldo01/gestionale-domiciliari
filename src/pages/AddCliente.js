@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import { useSelector } from 'react-redux';
-import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, InputAdornment, IconButton  } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'; // Import dropdown icon
 import { db } from '../firebase-config';
 import { collection, addDoc, query, where, getDocs, Timestamp  } from 'firebase/firestore';
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import CodiceFiscale from 'codice-fiscale-js';
-import { notifyErrorAddCliente, notifyErrorAddUsername, successAddCliente, successNoty } from '../components/Notify';
+import { notifyErrorAddCliente, successNoty } from '../components/Notify';
 import { NavMobile } from '../components/NavMobile';
 
 export function AddCliente() {
@@ -22,6 +23,7 @@ export function AddCliente() {
     const [gender, setGender] = useState('');
     const [nome, setNome] = useState('');
     const [cognome, setCognome] = useState('');
+    const [linkIndirizzo, setLinkIndirizzo] = useState('');
     const [indirizzo, setIndirizzo] = useState('');
     const [dataInizioPai, setDataInizioPai] = useState('');
     const [dataFinePai, setDataFinePai] = useState('');
@@ -43,8 +45,18 @@ export function AddCliente() {
         setCodiceFiscale("");
         setTelefono("");
         setEmail("");
-        setIndirizzo("");
+        setLinkIndirizzo("");
     };
+
+      // Funzione per incollare dagli appunti
+        const handlePasteClick = async () => {
+            try {
+            const text = await navigator.clipboard.readText();
+            setLinkIndirizzo(text);
+            } catch (error) {
+            console.error("Errore nell'incollare dagli appunti:", error);
+            }
+        };
 
     const capitalizeWords = (str) => {
         return str
@@ -55,15 +67,25 @@ export function AddCliente() {
       };
 
       
-  const toUpperCaseWords = (str) => {
-    return str.toUpperCase(); 
-  };
+    const toUpperCaseWords = (str) => {
+        return str.toUpperCase(); 
+    };
+
+    const isGoogleMapsLink = (link) => {
+        const regex = /https:\/\/www\.google\.com\/maps/;
+        return regex.test(link);  // Restituisce true se il link è un URL di Google Maps
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const cfExists = await checkCfExists(codiceFiscale);
         if (cfExists) {
             notifyErrorAddCliente("Questo codice fiscale è già inserito");
+            return;
+        }
+
+        if (linkIndirizzo && !isGoogleMapsLink(linkIndirizzo)) {
+            notifyErrorAddCliente("Il link inserito non è un link valido di Google Maps");
             return;
         }
     
@@ -77,7 +99,7 @@ export function AddCliente() {
                 uid,
                 cognome,
                 gender,
-                indirizzo,
+                linkIndirizzo,
                 dataInizioPai: formattedDataInizioPai,
                 dataFinePai: formattedDataFinePai,
                 dataNascita: formattedDataNascita,
@@ -162,6 +184,25 @@ export function AddCliente() {
                             <Collapse in={showOptionalFields}>
                                 <div className='row'>
                                     <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                                    <TextField
+                                        className="w-100"
+                                        label="Link Indirizzo Google Maps"
+                                        variant="outlined"
+                                        color="primary"
+                                        value={linkIndirizzo}
+                                        onChange={(e) => setLinkIndirizzo(e.target.value)}
+                                        InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                            <IconButton className='pe-0' onClick={handlePasteClick}>
+                                                <ContentPasteIcon fontSize='small' style={{color: "black"}}/>
+                                            </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                        }}
+                                    />
+                                    </div>
+                                    <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                                         <FormControl fullWidth color='primary'>
                                             <InputLabel id="gender-select-label">Genere</InputLabel>
                                             <Select
@@ -181,9 +222,6 @@ export function AddCliente() {
                                     </div>
                                     <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                                         <TextField className='w-100' label="Email" variant="outlined" color='primary' value={email} onChange={(e) => setEmail(e.target.value)} />
-                                    </div>
-                                    <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
-                                        <TextField className='w-100' label="Indirizzo" variant="outlined" color='primary' value={indirizzo} onChange={(e) => setIndirizzo(e.target.value)} />
                                     </div>
                                 </div>
                             </Collapse>

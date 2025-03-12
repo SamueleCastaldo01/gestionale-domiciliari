@@ -130,12 +130,14 @@ const DailySchedule = ({ selectedDate, uid }) => {
               </Typography>
               {bookingForSlot ? (
                 <div className="w-100">
-                  <Typography className="fw-bold" style={{ color: "#037e67" }} variant="body1">
+                  <h6 className="fw-bold mb-0" style={{ color: "#037e67" }}>
                     {bookingForSlot.nomeCompleto}
-                  </Typography>
-                  <Typography variant="body2">
-                    {bookingForSlot.oraFine}
-                  </Typography>
+                  </h6>
+                  {bookingForSlot.linkIndirizzo &&
+                    <a style={{fontWeight: "bold"}} href={bookingForSlot.linkIndirizzo} target="_blank" rel="noopener noreferrer">
+                      Google Maps
+                    </a>
+                  }
                 </div>
               ) : (
                 <Button
