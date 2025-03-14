@@ -14,6 +14,8 @@ import { AddCliente } from '../pages/AddCliente';
 import Login from '../pages/Login';
 import { AddBooking } from '../pages/AddBooking';
 import { AddPrestazioni } from '../pages/AddPrestazioni';
+import { RegisterList } from '../pages/RegisterList';
+import { AddRegister } from '../pages/addRegister';
 
 
 function AnimateRoutes ()  {
@@ -44,6 +46,8 @@ return (
     <Route path="/addcustomer" element={<AddCliente />} /> 
     <Route path="/appuntamenti" element={<Booking />} /> 
     <Route path="/addbooking" element={<AddBooking />} />
+    <Route path="/registerlist" element={<RegisterList />} /> 
+    <Route path="/addregister" element={<AddRegister />} /> 
     <Route path="/addprestazioni" element={<AddPrestazioni />} />
 
     </Route>

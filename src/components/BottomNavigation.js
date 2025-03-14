@@ -12,6 +12,7 @@ import { BottomNavigation } from '@mui/material';
 import { styled } from "@mui/material/styles";
 import HomeIcon from '@mui/icons-material/Home';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 
 
 
@@ -88,17 +89,28 @@ return (
     data-selected={location.pathname === '/customerlist' || location.pathname === '/addcustomer'}
   />
 )}
+  {isAuth && (
+    <BottomNavigationAction
+      component={Link}
+      className="linq"
+      value="Schede"
+      to="/appuntamenti"
+      label="Appuntamenti"
+      icon={<CalendarMonthIcon />}
+      data-selected={location.pathname === '/appuntamenti' || location.pathname === '/addbooking'}
+    />
+  )}
     {isAuth && (
-      <BottomNavigationAction
-        component={Link}
-        className="linq"
-        value="Schede"
-        to="/appuntamenti"
-        label="Appuntamenti"
-        icon={<CalendarMonthIcon />}
-        data-selected={location.pathname === '/appuntamenti' || location.pathname === '/addbooking'}
-      />
-    )}
+  <BottomNavigationAction
+    component={Link}
+    className="linq"
+    value="Sched"
+    to="/registerlist"
+    label="Registro"
+    icon={<AutoStoriesIcon />}
+    data-selected={location.pathname === '/registerlist' || location.pathname === '/addregister'}
+  />
+)}
 </BottomNavigation>
 </Paper>
 

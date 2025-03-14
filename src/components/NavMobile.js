@@ -1,5 +1,6 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd';
 import { IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +20,11 @@ export function NavMobile({text, page}) {
                 {page == "customerlist" &&
                     <IconButton onClick={() => {navigate("/addcustomer")}}>
                         <PersonAddAlt1Icon style={{fontSize: "24px", color: "black"}}/>
+                    </IconButton>
+                }
+                {page == "registerlist" &&
+                    <IconButton onClick={() => {navigate("/addregister")}}>
+                        <BookmarkAddIcon style={{fontSize: "24px", color: "black"}}/>
                     </IconButton>
                 }
             </div>
