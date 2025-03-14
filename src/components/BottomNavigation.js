@@ -108,7 +108,7 @@ return (
     to="/registerlist"
     label="Registro"
     icon={<AutoStoriesIcon />}
-    data-selected={location.pathname === '/registerlist' || location.pathname === '/addregister'}
+    data-selected={location.pathname === '/registerlist' || location.pathname === '/addregister' || location.pathname === '/editregister'}
   />
 )}
 </BottomNavigation>

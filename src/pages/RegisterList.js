@@ -105,7 +105,8 @@ export function RegisterList() {
           }}
         >
         {customers.map((customer) => (
-          <div key={customer.id} className='customer d-flex align-items-center justify-content-between py-3'>
+          <div key={customer.id} className='customer d-flex align-items-center justify-content-between py-3'
+          onClick={() => {navigate(`/editregister?idregister=${customer.id}`)}}>
             <div>
               <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-0'>{customer.nomeCompleto}</h5>
               <p className='mb-0' style={{color: "gray", fontSize: "14px"}}>{customer.ora} - {customer.oraFine}</p>

@@ -128,11 +128,11 @@ export function AddCliente() {
         {matches && <NavMobile text= "Aggiungi un paziente" />}
        
         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.7 }}
-            className='overflow-auto'
-            style={{ minHeight: "100vh" }}  // Assicura lo scrolling
+        initial={{ x: -20, opacity: 0 }}  
+        animate={{ x: 0, opacity: 1 }}   
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="overflow-auto"
+        style={{ minHeight: "100vh" }}
         >
             <div className='container-fluid'>
                 {!matches && <h2 className='titlePage'>Aggiungi un nuovo Paziente</h2>}

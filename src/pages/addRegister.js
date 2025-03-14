@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useSelector } from 'react-redux';
-import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box, IconButton } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { db } from '../firebase-config';
 import { collection, addDoc, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
 import moment from 'moment';
@@ -218,12 +219,12 @@ export function AddRegister() {
     <>
       {matches && <NavMobile text="Aggiungi al Registro" />}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
-        className='overflow-auto'
+        initial={{ x: -20, opacity: 0 }}  // Parte da sinistra fuori schermo
+        animate={{ x: 0, opacity: 1 }}     // Arriva alla posizione normale
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="overflow-auto"
         style={{ minHeight: "80vh" }}
-      >
+        >
         <div className='container-fluid'>
           {!matches && <h2 className='titlePage'>Aggiungi un nuovo Appuntamento/Registro</h2>}
 
@@ -242,8 +243,11 @@ export function AddRegister() {
 
           {/* Se la modalità è "Appuntamento", mostra l'autocomplete per selezionare un appuntamento */}
           {mode === "appuntamento" && !selectedBooking && (
-            <div className='my-4'>
-              <Autocomplete
+            <div className='mb-4'>
+            <IconButton className='p-0' onClick={() => {setMode(null); setSelectedBooking(null)}}>
+            <ArrowBackIosIcon fontSize='small' style={{color: "black"}}/>
+            </IconButton>
+              <Autocomplete className='mt-1'
                 options={appointments}
                 loading={loadingAppointments}
                 getOptionLabel={(option) => `${option.nomeCompleto} (${option.ora} - ${option.oraFine})`}
@@ -281,11 +285,14 @@ export function AddRegister() {
           {/* Mostra il form se in modalità "Nuovo" oppure se in modalità "Appuntamento" e l'appuntamento è stato selezionato */}
           {(mode === "nuovo" || (mode === "appuntamento" && selectedBooking)) && (
             <form onSubmit={handleSubmit}>
+            <IconButton className='p-0' onClick={() => {setMode(null); setSelectedBooking(null)}}>
+                <ArrowBackIosIcon fontSize='small' style={{color: "black"}}/>
+            </IconButton>
               <div className='row'>
                 {/* In modalità "Nuovo" mostriamo gli autocomplete per Paziente e Prestazioni */}
                 {mode === "nuovo" && (
                   <>
-                    <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                    <div className='mt-3 col-lg-4 col-md-6 col-sm-12'>
                       <Autocomplete
                         options={pazienti}
                         loading={loadingAutoComplete}
