@@ -192,6 +192,9 @@ export function AddRegister() {
     event.preventDefault();
   
     const newStart = selectedTime.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
+    const oraFine = calculateEndTime(selectedTime, durata);
+    const newEnd = oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
+  
     const q = query(
       collection(db, 'registerTab'),
       where('uid', '==', uid),
@@ -203,16 +206,16 @@ export function AddRegister() {
       const data = docSnap.data();
       const existingStart = data.ora && data.ora.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
       const existingEnd = data.oraFine && data.oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
-      if (newStart >= existingStart && newStart < existingEnd) {
+      // Verifica se l'intervallo [newStart, newEnd) si sovrappone all'intervallo [existingStart, existingEnd)
+      if (newStart < existingEnd && newEnd > existingStart) {
         conflict = true;
       }
     });
     if (conflict) {
-      notifyError("Orario già occupato da un altro appuntamento");
+      notifyError("Orario già occupato da un altro appuntamento. Verifica la durata e/o l'orario.");
       return;
     }
   
-    const oraFine = calculateEndTime(selectedTime, durata);
     const dataToAdd = {
       uid,
       durata,
