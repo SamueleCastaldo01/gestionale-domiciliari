@@ -200,10 +200,38 @@ export function EditRegister() {
       }
   
       const oldData = docSnap.data();
-      const oldDurata = oldData.durata; // ⬅️ Salviamo la vecchia durata per il confronto
-      const oldGiorno = oldData.giorno; // ⬅️ Salviamo anche il giorno, per sicurezza
+      // Puoi utilizzare oldData se ti serve per il riepilogo o altri controlli
+      // const oldDurata = oldData.durata;
+      // const oldGiorno = oldData.giorno;
   
-      // 2️⃣ Prepariamo i nuovi dati
+      // 2️⃣ Controllo dei conflitti: verifica se l'intervallo [newStart, newEnd) si sovrappone ad altri appuntamenti
+      const newStart = selectedTime.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
+      const newEnd = oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
+      
+      const q = query(
+        collection(db, 'registerTab'),
+        where('uid', '==', uid),
+        where('giorno', '==', selectedDate)
+      );
+      const querySnapshot = await getDocs(q);
+      let conflict = false;
+      querySnapshot.forEach(docSnap => {
+        // Escludi il documento corrente dalla verifica in modalità modifica
+        if (docSnap.id === idRegister) return;
+        const data = docSnap.data();
+        const existingStart = data.ora && data.ora.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
+        const existingEnd = data.oraFine && data.oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
+        // Se l'intervallo del nuovo appuntamento si sovrappone a quello esistente, segnala conflitto
+        if (newStart < existingEnd && newEnd > existingStart) {
+          conflict = true;
+        }
+      });
+      if (conflict) {
+        notifyError("Orario già occupato da un altro appuntamento. Verifica la durata e/o l'orario.");
+        return;
+      }
+  
+      // 3️⃣ Prepariamo i nuovi dati da aggiornare
       const dataToUpdate = {
         durata,
         giorno: selectedDate,
@@ -217,14 +245,15 @@ export function EditRegister() {
       dataToUpdate.pazienteId = selectedCustomerId;
       dataToUpdate.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
       dataToUpdate.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
+      
       const selectedPrestazione = prestazioni.find(p => p.id === selectedPrestazioniId);
       dataToUpdate.prestazioniId = selectedPrestazioniId;
       dataToUpdate.nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
   
-      // 3️⃣ Aggiorna il registro
+      // 4️⃣ Aggiorna il documento nel registro
       await updateDoc(docRef, dataToUpdate);
   
-      // 4️⃣ Aggiorna il riepilogo `summaryTab`
+      // 5️⃣ Aggiorna il riepilogo su summaryTab (se necessario)
       await updateSummaryTabOnEdit(oldData, dataToUpdate);
   
       successNoty("Prestazione Aggiornata!");
