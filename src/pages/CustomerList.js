@@ -279,8 +279,8 @@ export function CustomerList() {
         {customers.map((customer) => (
           <div key={customer.id} className='customer d-flex align-items-center justify-content-between py-3'>
             <div>
-              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-0'>{customer.nome} {customer.cognome}</h5>
-              <p className='mb-0' style={{color: "gray", fontSize: "14px"}}>{customer.telefono}</p>
+              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-1'>{customer.nome} {customer.cognome}</h5>
+              {customer.telefono && <p className='mb-0' style={{color: "gray", fontSize: "14px"}}>Tel: {customer.telefono}</p>}
             </div>
             <div>
             <ArrowForwardIosIcon/>

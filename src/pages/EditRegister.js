@@ -139,9 +139,45 @@ export function EditRegister() {
     setSelectedTime(event.target.value);
   };
 
+  //----------------------------------------------------------
+  const updateSummaryTabOnEdit = async (oldData, newData) => {
+    const { uid, pazienteId, nomeCompleto, giorno } = newData;
+    const oldDurata = oldData.durata;
+    const newDurata = newData.durata;
+    
+    const dateObj = new Date(giorno);
+    const mese = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
+    
+    const summaryDocRef = doc(db, "summaryTab", `${pazienteId}_${mese}`);
+  
+    try {
+      const docSnap = await getDoc(summaryDocRef);
+  
+      if (docSnap.exists()) {
+        const summaryData = docSnap.data();
+        let updateData = {};
+  
+        // 1️⃣ Sottraiamo la vecchia durata
+        if (oldDurata === 30) updateData.count30 = Math.max((summaryData.count30 || 0) - 1, 0);
+        if (oldDurata === 45) updateData.count45 = Math.max((summaryData.count45 || 0) - 1, 0);
+        if (oldDurata === 60) updateData.count60 = Math.max((summaryData.count60 || 0) - 1, 0);
+  
+        // 2️⃣ Aggiungiamo la nuova durata
+        if (newDurata === 30) updateData.count30 = (updateData.count30 || summaryData.count30 || 0) + 1;
+        if (newDurata === 45) updateData.count45 = (updateData.count45 || summaryData.count45 || 0) + 1;
+        if (newDurata === 60) updateData.count60 = (updateData.count60 || summaryData.count60 || 0) + 1;
+  
+        await updateDoc(summaryDocRef, updateData);
+      }
+  
+    } catch (error) {
+      console.error("Errore nell'aggiornare summaryTab:", error);
+    }
+  };
+  //----------------------------------------------------------
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     // Validazione: controlla se i campi obbligatori sono compilati
     if (!selectedCustomerId) {
       notifyError("Aggiungi il paziente");
@@ -151,36 +187,55 @@ export function EditRegister() {
       notifyError("Aggiungi la prestazione");
       return;
     }
-
+  
     const oraFine = calculateEndTime(selectedTime, durata);
-    const dataToUpdate = {
-      durata,
-      giorno: selectedDate,
-      ora: selectedTime,
-      oraFine,
-      note,
-      // Non aggiorniamo dataCreazione; potresti aggiungere un campo updatedAt se lo desideri
-    };
-
-    // Aggiorna i dati relativi a paziente e prestazione
-    const selectedCustomer = pazienti.find(p => p.id === selectedCustomerId);
-    dataToUpdate.pazienteId = selectedCustomerId;
-    dataToUpdate.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
-    dataToUpdate.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
-    const selectedPrestazione = prestazioni.find(p => p.id === selectedPrestazioniId);
-    dataToUpdate.prestazioniId = selectedPrestazioniId;
-    dataToUpdate.nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
-
+    const docRef = doc(db, "registerTab", idRegister);
+  
     try {
-      const docRef = doc(db, "registerTab", idRegister);
+      // 1️⃣ Recupera i dati attuali del documento
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        notifyError("Errore: appuntamento non trovato!");
+        return;
+      }
+  
+      const oldData = docSnap.data();
+      const oldDurata = oldData.durata; // ⬅️ Salviamo la vecchia durata per il confronto
+      const oldGiorno = oldData.giorno; // ⬅️ Salviamo anche il giorno, per sicurezza
+  
+      // 2️⃣ Prepariamo i nuovi dati
+      const dataToUpdate = {
+        durata,
+        giorno: selectedDate,
+        ora: selectedTime,
+        oraFine,
+        note,
+      };
+  
+      // Aggiorniamo i dati del paziente e della prestazione
+      const selectedCustomer = pazienti.find(p => p.id === selectedCustomerId);
+      dataToUpdate.pazienteId = selectedCustomerId;
+      dataToUpdate.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
+      dataToUpdate.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
+      const selectedPrestazione = prestazioni.find(p => p.id === selectedPrestazioniId);
+      dataToUpdate.prestazioniId = selectedPrestazioniId;
+      dataToUpdate.nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
+  
+      // 3️⃣ Aggiorna il registro
       await updateDoc(docRef, dataToUpdate);
-      successNoty("Appuntamento aggiornato!");
+  
+      // 4️⃣ Aggiorna il riepilogo `summaryTab`
+      await updateSummaryTabOnEdit(oldData, dataToUpdate);
+  
+      successNoty("Prestazione Aggiornata!");
       navigate("/registerlist");
     } catch (error) {
       console.error("Errore nell'aggiornamento dell'appuntamento: ", error);
     }
   };
 
+
+  //----------------------------------------------------------
   // Mostra un loader se i dati del registro non sono ancora stati caricati
   if (loadingRegister) {
     return (
@@ -210,6 +265,7 @@ export function EditRegister() {
               {/* Autocomplete per la selezione del paziente */}
               <div className="mt-3 col-lg-4 col-md-6 col-sm-12">
                 <Autocomplete
+                  disabled
                   options={pazienti}
                   loading={loadingAutoComplete}
                   getOptionLabel={(option) => `${option.nome} ${option.cognome}`}
@@ -290,6 +346,7 @@ export function EditRegister() {
               <h6 className="mb-0 mt-4">Dettagli della Visita</h6>
               <div className="mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3">
                 <TextField
+                  disabled
                   className="w-100"
                   label="Giorno"
                   type="date"

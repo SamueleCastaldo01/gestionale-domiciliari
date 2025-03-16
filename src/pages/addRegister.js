@@ -8,7 +8,7 @@ import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autoco
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { db } from '../firebase-config';
-import { collection, addDoc, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, Timestamp, orderBy, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { notifyError, successNoty } from '../components/Notify';
@@ -140,10 +140,57 @@ export function AddRegister() {
     return moment(startTime, "HH:mm").add(duration, "minutes").format("HH:mm");
   };
 
+  //---------------------------------------------------------------
+  const updateSummaryTab = async (dataToAdd) => {
+    const { uid, pazienteId, nomeCompleto, codiceFiscale, durata, giorno } = dataToAdd;
+    const dateObj = new Date(giorno);
+    const mese = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
+  
+    const summaryDocRef = doc(db, "summaryTab", `${pazienteId}_${mese}`);
+  
+    try {
+      const docSnap = await getDoc(summaryDocRef);
+  
+      if (docSnap.exists()) {
+        // Se il riepilogo esiste già, aggiorniamo i conteggi
+        const summaryData = docSnap.data();
+        let updateData = {
+          numeroAccessi: summaryData.numeroAccessi + 1,
+        };
+  
+        if (durata === 30) updateData.count30 = (summaryData.count30 || 0) + 1;
+        if (durata === 45) updateData.count45 = (summaryData.count45 || 0) + 1;
+        if (durata === 60) updateData.count60 = (summaryData.count60 || 0) + 1;
+  
+        await updateDoc(summaryDocRef, updateData);
+      } else {
+        // Se non esiste, creiamo un nuovo riepilogo
+        const newSummaryData = {
+          uid,
+          mese,
+          pazienteId,
+          nomeCompleto,
+          codiceFiscale, 
+          numeroAccessi: 1,
+          count30: durata === 30 ? 1 : 0,
+          count45: durata === 45 ? 1 : 0,
+          count60: durata === 60 ? 1 : 0,
+        };
+  
+        await setDoc(summaryDocRef, newSummaryData);
+      }
+  
+    } catch (error) {
+      console.error("Errore nell'aggiornare summaryTab:", error);
+    }
+  };
+  
+
+
+  //---------------------------------------------------------------
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    // Controllo conflitti (per evitare doppie prenotazioni nello stesso orario)
+  
     const newStart = selectedTime.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
     const q = query(
       collection(db, 'registerTab'),
@@ -164,7 +211,7 @@ export function AddRegister() {
       notifyError("Orario già occupato da un altro appuntamento");
       return;
     }
-
+  
     const oraFine = calculateEndTime(selectedTime, durata);
     const dataToAdd = {
       uid,
@@ -175,7 +222,7 @@ export function AddRegister() {
       note,
       dataCreazione: Timestamp.fromDate(new Date()),
     };
-
+  
     if (mode === "nuovo") {
       if (!selectedCustomerId) {
         notifyError("Aggiungi il paziente");
@@ -185,10 +232,13 @@ export function AddRegister() {
         notifyError("Aggiungi la prestazione");
         return;
       }
+  
       const selectedCustomer = pazienti.find(p => p.id === selectedCustomerId);
       dataToAdd.pazienteId = selectedCustomerId;
       dataToAdd.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
       dataToAdd.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
+      dataToAdd.codiceFiscale = selectedCustomer ? selectedCustomer.codiceFiscale : "";  // 👈 Aggiunto codice fiscale
+  
       const selectedPrestazione = prestazioni.find(p => p.id === selectedPrestazioniId);
       dataToAdd.prestazioniId = selectedPrestazioniId;
       dataToAdd.nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
@@ -197,23 +247,26 @@ export function AddRegister() {
         notifyError("Seleziona un appuntamento");
         return;
       }
-      // Utilizza i dati dell'appuntamento selezionato per precompilare il form
+  
       dataToAdd.pazienteId = selectedBooking.pazienteId;
       dataToAdd.nomeCompleto = selectedBooking.nomeCompleto;
       dataToAdd.linkIndirizzo = selectedBooking.linkIndirizzo;
       dataToAdd.prestazioniId = selectedBooking.prestazioniId;
       dataToAdd.nomePrestazione = selectedBooking.nomePrestazione;
+      dataToAdd.codiceFiscale = selectedBooking.codiceFiscale;  // 👈 Aggiunto codice fiscale
     }
-
+  
     try {
       await addDoc(collection(db, 'registerTab'), dataToAdd);
+      await updateSummaryTab(dataToAdd); // 👈 Passa codice fiscale a summaryTab
       handleReset();
       navigate("/registerlist");
-      successNoty("Appuntamento Aggiunto!");
+      successNoty("Prestazione Aggiunta!");
     } catch (error) {
       console.error('Errore nell\'aggiunta dell\'appuntamento: ', error);
     }
   };
+  
 
   return (
     <>
@@ -244,10 +297,10 @@ export function AddRegister() {
           {/* Se la modalità è "Appuntamento", mostra l'autocomplete per selezionare un appuntamento */}
           {mode === "appuntamento" && !selectedBooking && (
             <div className='mb-4'>
-            <IconButton className='p-0' onClick={() => {setMode(null); setSelectedBooking(null)}}>
+            <IconButton className='p-0 mb-3' onClick={() => {setMode(null); setSelectedBooking(null)}}>
             <ArrowBackIosIcon fontSize='small' style={{color: "black"}}/>
             </IconButton>
-              <Autocomplete className='mt-1'
+              <Autocomplete className='mt-0'
                 options={appointments}
                 loading={loadingAppointments}
                 getOptionLabel={(option) => `${option.nomeCompleto} (${option.ora} - ${option.oraFine})`}

@@ -13,6 +13,7 @@ import { styled } from "@mui/material/styles";
 import HomeIcon from '@mui/icons-material/Home';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 
 
@@ -109,6 +110,17 @@ return (
     label="Registro"
     icon={<AutoStoriesIcon />}
     data-selected={location.pathname === '/registerlist' || location.pathname === '/addregister' || location.pathname === '/editregister'}
+  />
+)}
+  {isAuth && (
+  <BottomNavigationAction
+    component={Link}
+    className="linq"
+    value="Sched"
+    to="/assessmentList"
+    label="Riepilogo"
+    icon={<AssessmentIcon />}
+    data-selected={location.pathname === '/assessmentList' }
   />
 )}
 </BottomNavigation>

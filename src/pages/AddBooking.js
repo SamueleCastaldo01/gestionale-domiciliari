@@ -129,6 +129,7 @@ export function AddBooking() {
         const oraFine = calculateEndTime(selectedTime, durata);
         const selectedCustomer = pazienti.find(paziente => paziente.id === selectedCustomerId);
         const nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
+        const codiceFiscale = selectedCustomer ? `${selectedCustomer.codiceFiscale}` : "";
         const linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
         const selectedPrestazione = prestazioni.find(prestazione => prestazione.id === selectedPrestazioniId);
         const nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
@@ -172,6 +173,7 @@ export function AddBooking() {
             await addDoc(collection(db, 'bookingTab'), {
                 uid,
                 durata,
+                codiceFiscale,
                 pazienteId: selectedCustomerId,
                 nomeCompleto,
                 linkIndirizzo,

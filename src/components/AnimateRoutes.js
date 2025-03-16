@@ -17,6 +17,7 @@ import { AddPrestazioni } from '../pages/AddPrestazioni';
 import { RegisterList } from '../pages/RegisterList';
 import { AddRegister } from '../pages/AddRegister';
 import { EditRegister } from '../pages/EditRegister';
+import { AssessmentList } from '../pages/AssessmentList';
 
 
 function AnimateRoutes ()  {
@@ -51,6 +52,7 @@ return (
     <Route path="/addregister" element={<AddRegister />} /> 
     <Route path="/editregister" element={<EditRegister />} /> 
     <Route path="/addprestazioni" element={<AddPrestazioni />} />
+    <Route path="/assessmentList" element={<AssessmentList />} /> 
 
     </Route>
 
