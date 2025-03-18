@@ -18,6 +18,7 @@ import { RegisterList } from '../pages/RegisterList';
 import { AddRegister } from '../pages/AddRegister';
 import { EditRegister } from '../pages/EditRegister';
 import { AssessmentList } from '../pages/AssessmentList';
+import { CustomerInfo } from '../pages/CustomerInfo';
 
 
 function AnimateRoutes ()  {
@@ -45,6 +46,7 @@ return (
     <Route element={<PrivateRoutes isAuth={isAuth} isAuthUser={isAuthUser}/>}> 
     <Route path="/" element={<Homepage />} /> 
     <Route path="/customerlist" element={<CustomerList />} /> 
+    <Route path="/customerinfo" element={<CustomerInfo />} /> 
     <Route path="/addcustomer" element={<AddCliente />} /> 
     <Route path="/appuntamenti" element={<Booking />} /> 
     <Route path="/addbooking" element={<AddBooking />} />

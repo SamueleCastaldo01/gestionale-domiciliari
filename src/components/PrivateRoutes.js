@@ -5,7 +5,7 @@ import { tutti, dipen, guid, supa } from './utenti';
 export function PrivateRoutes({ isAuth, isAuthUser }) {
     console.log(isAuthUser);
     if (!isAuth && !isAuthUser) {
-        return <Navigate to="/loginuser" />;
+        return <Navigate to="/login" />;
     }
     
     // Se l'utente è autenticato e non è un utente normale, mostra l'Outlet per le rotte protette
@@ -14,7 +14,7 @@ export function PrivateRoutes({ isAuth, isAuthUser }) {
 
 export function PrivateRoutesUser ({isAuthUser})  {
     return(
-        isAuthUser ? <Outlet/> : <Navigate to="/loginuser"/>
+        isAuthUser ? <Outlet/> : <Navigate to="/login"/>
     );
 }
 

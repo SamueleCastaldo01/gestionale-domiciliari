@@ -138,21 +138,24 @@ function AppContent({ signUserOut, matches }) {
       {!matches && !isLoginPage && !isBlockPage && isAuth && <MiniDrawer signUserOut={signUserOut} />}
 
       <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          padding: matches ? 0 : "24px",
-          paddingTop: "24px",
-          overflowX: "hidden", // Impedisce lo scroll orizzontale
-        }}
-      >
-        <ToastContainer limit={1} />
-        {/* Render delle rotte animate */}
-        <div style={{ marginTop: !matches && "50px" }}>
-          <AnimateRoutes />
-        </div>
-      </Box>
+  component="main"
+  sx={{
+    flexGrow: 1,
+    padding: matches ? 0 : "24px",
+    paddingTop: "24px",
+    paddingBottom: matches ? "60px" : "0px",
+    overflowX: "hidden",
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+  }}
+>
+  <ToastContainer limit={1} />
+  {/* Render delle rotte animate */}
+  <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", marginTop: !matches && "50px" }}>
+    <AnimateRoutes />
+  </div>
+</Box>
     </>
   );
 }

@@ -103,7 +103,6 @@ const forgotPassword = () => {
               </div>
             </div>
             <div>
-            <p className="mb-0">Accedi come utente <a style={{ cursor: 'pointer' }} onClick={() => {navigate("/loginuser")}} className="text-white-50 fw-bold">Accedi</a></p>
             {/** <p className="mb-0">Do not have an account? <a onClick={singup} className="text-white-50 fw-bold">SignUp</a>
               </p> */}
             </div>

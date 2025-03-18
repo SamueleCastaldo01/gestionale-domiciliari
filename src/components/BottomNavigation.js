@@ -87,7 +87,7 @@ return (
     to="/customerlist"
     label="Pazienti"
     icon={<ContactPageIcon />}
-    data-selected={location.pathname === '/customerlist' || location.pathname === '/addcustomer'}
+    data-selected={location.pathname === '/customerlist' || location.pathname === '/addcustomer' || location.pathname === '/customerinfo'}
   />
 )}
   {isAuth && (

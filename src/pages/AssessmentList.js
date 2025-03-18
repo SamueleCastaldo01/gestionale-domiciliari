@@ -4,11 +4,16 @@ import { motion } from "framer-motion";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { db } from "../firebase-config";
 import { collection, getDocs, query, where } from "firebase/firestore";
-
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
+import { Button } from "@mui/material"; // Per aggiungere il bottone
+import DownloadIcon from "@mui/icons-material/Download"; // Icona di download
 import { TextField } from "@mui/material";
 import { StyledDataGrid } from "../components/StyledDataGrid";
 import { itIT } from "@mui/x-data-grid/locales";
 import { NavMobile } from "../components/NavMobile";
+
 
 export function AssessmentList() {
   const matches = useMediaQuery("(max-width:920px)");
@@ -23,6 +28,36 @@ export function AssessmentList() {
     now.setMonth(now.getMonth() - 1);
     return now.toISOString().slice(0, 7);
   });
+
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+  
+    const [year, month] = searchMonth.split("-");
+    doc.text(`Riepilogo Mensile - ${month}/${year}`, 14, 15);
+  
+    const tableColumn = columns.map(col => col.headerName);
+  
+    const tableRows = summaryData.map(row => [
+      row.nomeCompleto,
+      row.codiceFiscale,
+      row.numeroAccessi,
+      row.count30,
+      row.count45,
+      row.count60
+    ]);
+  
+    autoTable(doc, { 
+      head: [tableColumn],
+      body: tableRows,
+      startY: 25,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [22, 160, 133] },
+    });
+  
+    doc.save(`riepilogo_mensile_${month}_${year}.pdf`);
+  };
+
 
   // Funzione per recuperare i dati dalla tabella summaryTab
   const fetchSummaryData = async () => {
@@ -74,6 +109,17 @@ export function AssessmentList() {
 
           {loading && <p>Caricamento...</p>}
           {!loading && matches && (
+            <>
+            
+            <Button
+            variant="contained"
+            color="primary"
+            onClick={generatePDF}
+            startIcon={<DownloadIcon />}
+            sx={{ marginBottom: "1rem" }}
+          >
+            Scarica PDF
+          </Button>
             <div className="div-customer mt-3 overflow-auto pb-4" style={{ maxHeight: "75vh", overflowY: "auto" }}>
               {summaryData.map((item) => (
                 <div key={item.pazienteId} className="customer d-flex align-items-center justify-content-between py-3">
@@ -86,8 +132,10 @@ export function AssessmentList() {
                     </p>
                   </div>
                 </div>
+                
               ))}
             </div>
+            </>
           )}
 
           {!loading && !matches && (

@@ -6,6 +6,7 @@ import Button from '@mui/material/Button';
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import { useSelector } from 'react-redux';
 import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, InputAdornment, IconButton  } from '@mui/material';
+import { Box } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'; // Import dropdown icon
 import { db } from '../firebase-config';
 import { collection, addDoc, query, where, getDocs, Timestamp  } from 'firebase/firestore';
@@ -131,10 +132,8 @@ export function AddCliente() {
         initial={{ x: -20, opacity: 0 }}  
         animate={{ x: 0, opacity: 1 }}   
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="overflow-auto"
-        style={{ minHeight: "100vh" }}
         >
-            <div className='container-fluid'>
+            <div className='container-fluid mb-4'>
                 {!matches && <h2 className='titlePage'>Aggiungi un nuovo Paziente</h2>}
 
                 <form onSubmit={handleSubmit}>
