@@ -57,7 +57,7 @@ export function CustomerList() {
       }
       else {
         // Crea una query per ordinare per dataCreazione in ordine decrescente se non c'è il filtro
-        customerQuery = query(customerCollection,where("uid", "==", uid), orderBy("nome", "asc"));
+        customerQuery = query(customerCollection,where("uid", "==", uid), orderBy("cognome", "asc"));
       }
   
       const customerSnapshot = await getDocs(customerQuery);
