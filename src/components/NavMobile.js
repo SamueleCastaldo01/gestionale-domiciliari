@@ -3,6 +3,8 @@ import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd';
 import { IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import EventIcon from '@mui/icons-material/Event';
+import EditCalendarIcon from '@mui/icons-material/EditCalendar';
 
 export function NavMobile({text, page}) {
     const navigate = useNavigate();
@@ -23,9 +25,29 @@ export function NavMobile({text, page}) {
                     </IconButton>
                 }
                 {page == "registerlist" &&
+                <>
                     <IconButton onClick={() => {navigate("/addregister")}}>
                         <BookmarkAddIcon style={{fontSize: "24px", color: "black"}}/>
                     </IconButton>
+                     <IconButton onClick={() => {navigate("/viewregister")}}>
+                     <EventIcon style={{fontSize: "24px", color: "black"}}/>
+                    </IconButton>
+                </>
+                }
+                {page == "bookinglist" &&
+                <IconButton onClick={() => {navigate("/bookingview")}}>
+                    <EventIcon style={{fontSize: "24px", color: "black"}}/>
+                </IconButton>
+                }
+                {page == "appoimentviewer" &&
+                <IconButton onClick={() => {navigate("/appuntamenti")}}>
+                    <EditCalendarIcon style={{fontSize: "24px", color: "black"}}/>
+                </IconButton>
+                }
+                {page == "viewregister" &&
+                <IconButton onClick={() => {navigate("/registerlist")}}>
+                    <EditCalendarIcon style={{fontSize: "24px", color: "black"}}/>
+                </IconButton>
                 }
             </div>
               

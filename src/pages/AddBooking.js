@@ -7,14 +7,16 @@ import { useSelector } from 'react-redux';
 import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { db } from '../firebase-config';
-import { collection, addDoc, query, where, getDocs, getDoc, updateDoc, doc, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, getDoc, updateDoc, doc, Timestamp, orderBy, deleteDoc } from 'firebase/firestore';
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { notifyError, successNoty } from '../components/Notify';
 import { NavMobile } from '../components/NavMobile';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 export function AddBooking() {
     const matches = useMediaQuery("(max-width:920px)");
+    const [openDialog, setOpenDialog] = useState(false);
     const user = useSelector((state) => state.auth.user);
     const uid = user?.uid;
     const location = useLocation();
@@ -138,6 +140,20 @@ export function AddBooking() {
     };
 
 //-----------------------------------------------------------------
+    const handleDelete = async () => {
+        try {
+            await deleteDoc(doc(db, 'bookingTab', idbooking));
+            successNoty("Appuntamento eliminato!");
+            navigate("/appuntamenti");
+        } catch (error) {
+            console.error("Errore nella cancellazione dell'appuntamento: ", error);
+            notifyError("Errore nella cancellazione dell'appuntamento.");
+        } finally {
+            setOpenDialog(false);
+        }
+    };
+
+
     const handleSubmit = async (event) => {
         event.preventDefault();
     
@@ -393,6 +409,42 @@ export function AddBooking() {
                             {idbooking ? "Aggiorna Appuntamento" : "Aggiungi Appuntamento"}
                         </Button>
                     </form>
+
+
+                    {idbooking && (
+                        <>
+                            <Button 
+                                className='mt-2 w-100 py-2' 
+                                variant="contained" 
+                                color="error" 
+                                onClick={() => setOpenDialog(true)}
+                            >
+                                Elimina Appuntamento
+                            </Button>
+
+                            {/* Dialog di conferma eliminazione */}
+                            <Dialog
+                                open={openDialog}
+                                onClose={() => setOpenDialog(false)}
+                            >
+                                <DialogTitle>Conferma Eliminazione</DialogTitle>
+                                <DialogContent>
+                                    <DialogContentText>
+                                        Sei sicuro di voler eliminare questo appuntamento? Questa azione non può essere annullata.
+                                    </DialogContentText>
+                                </DialogContent>
+                                <DialogActions>
+                                    <Button onClick={() => setOpenDialog(false)} color="primary">
+                                        Annulla
+                                    </Button>
+                                    <Button onClick={handleDelete} color="error">
+                                        Elimina
+                                    </Button>
+                                </DialogActions>
+                            </Dialog>
+                        </>
+                    )}
+
                 </div>
             </motion.div>
         </>

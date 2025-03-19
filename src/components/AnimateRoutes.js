@@ -19,6 +19,8 @@ import { AddRegister } from '../pages/AddRegister';
 import { EditRegister } from '../pages/EditRegister';
 import { AssessmentList } from '../pages/AssessmentList';
 import { CustomerInfo } from '../pages/CustomerInfo';
+import AppointmentViewer from '../pages/AppointmentViewer';
+import ViewRegister from '../pages/ViewRegister';
 
 
 function AnimateRoutes ()  {
@@ -49,10 +51,12 @@ return (
     <Route path="/customerinfo" element={<CustomerInfo />} /> 
     <Route path="/addcustomer" element={<AddCliente />} /> 
     <Route path="/appuntamenti" element={<Booking />} /> 
+    <Route path="/bookingview" element={<AppointmentViewer />} /> 
     <Route path="/addbooking" element={<AddBooking />} />
     <Route path="/registerlist" element={<RegisterList />} /> 
     <Route path="/addregister" element={<AddRegister />} /> 
     <Route path="/editregister" element={<EditRegister />} /> 
+    <Route path="/viewregister" element={<ViewRegister />} /> 
     <Route path="/addprestazioni" element={<AddPrestazioni />} />
     <Route path="/assessmentList" element={<AssessmentList />} /> 
 

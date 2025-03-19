@@ -20,7 +20,7 @@ function Booking() {
 
   return (
     <>
-      {matches && <NavMobile text="I miei appuntamenti" />}
+      {matches && <NavMobile text="I miei appuntamenti" page="bookinglist" />}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

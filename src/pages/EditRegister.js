@@ -441,7 +441,7 @@ export function EditRegister() {
                 </Collapse>
               </div>
             </div>
-            <Button className="mt-4 w-100 py-2" type="submit" variant="contained">Aggiorna</Button>
+            <Button className="mt-4 w-100 py-2" type="submit" variant="contained">Modifica</Button>
           </form>
         </div>
       </motion.div>

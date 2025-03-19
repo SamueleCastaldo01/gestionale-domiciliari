@@ -27,10 +27,10 @@ function BottomNavi ()  {
     const username = useSelector((state) => state.userAuth.userDetails?.username);
 
     const timeElapsed = Date.now();  //prende la data attuale in millisecondi
-    const today = new Date(timeElapsed);    //converte nel tipo data
-    var formattedDate = moment(today).format('DD-MM-YYYY');  //coverte nel formato richiesto
+    const today = new Date(timeElapsed); 
+    var formattedDate = moment(today).format('DD-MM-YYYY'); 
     localStorage.setItem("today", formattedDate);
-    const [todayC, setTodayC] = useState(localStorage.getItem("today"));  //variabile che andiamo ad utilizzare
+    const [todayC, setTodayC] = useState(localStorage.getItem("today")); 
 
     const BottomNavigationAction = styled(MuiBottomNavigationAction)(`
     color: #f6f6f6;
@@ -98,7 +98,7 @@ return (
       to="/appuntamenti"
       label="Appuntamenti"
       icon={<CalendarMonthIcon />}
-      data-selected={location.pathname === '/appuntamenti' || location.pathname === '/addbooking'}
+      data-selected={location.pathname === '/appuntamenti' || location.pathname === '/addbooking' || location.pathname === '/bookingview'}
     />
   )}
     {isAuth && (
@@ -109,7 +109,7 @@ return (
     to="/registerlist"
     label="Registro"
     icon={<AutoStoriesIcon />}
-    data-selected={location.pathname === '/registerlist' || location.pathname === '/addregister' || location.pathname === '/editregister'}
+    data-selected={location.pathname === '/registerlist' || location.pathname === '/addregister' || location.pathname === '/editregister' || location.pathname === '/viewregister'}
   />
 )}
   {isAuth && (
