@@ -126,7 +126,7 @@ export function AssessmentList() {
                   <div>
                     <h5 style={{ fontSize: "17px", fontWeight: "400" }} className="mb-0">{item.nomeCompleto}</h5>
                     <h5 style={{ fontSize: "15px", fontWeight: "400", color: "gray" }} className="mt-1 mb-0">Codice Fiscale: {item.codiceFiscale}</h5>
-                    <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>NFC: {item.numeroAccessi}</p>
+                    <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>Numero Accessi: {item.numeroAccessi}</p>
                     <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>
                       30': {item.count30} | 45': {item.count45} | 60': {item.count60}
                     </p>

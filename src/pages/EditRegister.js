@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useSelector } from 'react-redux';
-import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box, IconButton } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { db } from '../firebase-config';
-import { collection, doc, getDoc, updateDoc, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, updateDoc, deleteDoc, query, where, getDocs, Timestamp, orderBy } from 'firebase/firestore';
 import moment from 'moment';
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { notifyError, successNoty } from '../components/Notify';
@@ -36,6 +36,7 @@ export function EditRegister() {
   // State per i campi del form
   const [selectedDate, setSelectedDate] = useState(getCurrentDate());
   const [selectedTime, setSelectedTime] = useState(getCurrentTime());
+  const [selectedTimeEnd, setSelectedTimeEnd] = useState();
   const [durata, setDurata] = useState(30);
   const [note, setNote] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
@@ -46,6 +47,9 @@ export function EditRegister() {
   const [prestazioni, setPrestazioni] = useState([]);
   const [loadingAutoComplete, setLoadingAutocomplete] = useState(true);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
+
+  // Stato per il dialog di eliminazione
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   // Funzione per calcolare l'ora di fine a partire dall'ora di inizio e dalla durata
   const calculateEndTime = (startTime, duration) => {
@@ -68,6 +72,7 @@ export function EditRegister() {
         const data = docSnap.data();
         setSelectedDate(data.giorno || getCurrentDate());
         setSelectedTime(data.ora || getCurrentTime());
+        setSelectedTimeEnd(data.oraFine);
         setDurata(data.durata || 30);
         setNote(data.note || "");
         setSelectedCustomerId(data.pazienteId || null);
@@ -128,7 +133,9 @@ export function EditRegister() {
   }, [idRegister]);
 
   const handledurataChange = (event) => {
-    setDurata(event.target.value);
+    const newDurata = event.target.value;
+    setDurata(newDurata);
+    setSelectedTimeEnd(calculateEndTime(selectedTime, newDurata));
   };
 
   const handleChangeDate = (event) => {
@@ -139,9 +146,20 @@ export function EditRegister() {
     setSelectedTime(event.target.value);
   };
 
+  const handleChangeTimeEnd = (event) => {
+    const newTime = event.target.value;
+    const minTime = calculateEndTime(selectedTime, durata);
+    if (newTime < minTime) {
+      notifyError("L'orario di uscita non può essere inferiore all'orario di ingresso più la durata.");
+      setSelectedTimeEnd(minTime);
+    } else {
+      setSelectedTimeEnd(newTime);
+    }
+  };
+
   //----------------------------------------------------------
   const updateSummaryTabOnEdit = async (oldData, newData) => {
-    const { uid, pazienteId, nomeCompleto, giorno } = newData;
+    const { pazienteId, giorno } = newData;
     const oldDurata = oldData.durata;
     const newDurata = newData.durata;
     
@@ -156,13 +174,11 @@ export function EditRegister() {
       if (docSnap.exists()) {
         const summaryData = docSnap.data();
         let updateData = {};
-  
-        // 1️⃣ Sottraiamo la vecchia durata
+
         if (oldDurata === 30) updateData.count30 = Math.max((summaryData.count30 || 0) - 1, 0);
         if (oldDurata === 45) updateData.count45 = Math.max((summaryData.count45 || 0) - 1, 0);
         if (oldDurata === 60) updateData.count60 = Math.max((summaryData.count60 || 0) - 1, 0);
   
-        // 2️⃣ Aggiungiamo la nuova durata
         if (newDurata === 30) updateData.count30 = (updateData.count30 || summaryData.count30 || 0) + 1;
         if (newDurata === 45) updateData.count45 = (updateData.count45 || summaryData.count45 || 0) + 1;
         if (newDurata === 60) updateData.count60 = (updateData.count60 || summaryData.count60 || 0) + 1;
@@ -174,6 +190,35 @@ export function EditRegister() {
       console.error("Errore nell'aggiornare summaryTab:", error);
     }
   };
+  //----------------------------------------------------------
+  const updateSummaryTabOnDelete = async (oldData) => {
+    const { pazienteId, giorno, durata: oldDurata } = oldData;
+    const dateObj = new Date(giorno);
+    const mese = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
+    const summaryDocRef = doc(db, "summaryTab", `${pazienteId}_${mese}`);
+
+    try {
+        const summarySnap = await getDoc(summaryDocRef);
+        if (summarySnap.exists()) {
+            const summaryData = summarySnap.data();
+            let updateData = {};
+
+            updateData.numeroAccessi = Math.max((summaryData.numeroAccessi || 0) - 1, 0);
+
+            if (oldDurata === 30) {
+                updateData.count30 = Math.max((summaryData.count30 || 0) - 1, 0);
+            } else if (oldDurata === 45) {
+                updateData.count45 = Math.max((summaryData.count45 || 0) - 1, 0);
+            } else if (oldDurata === 60) {
+                updateData.count60 = Math.max((summaryData.count60 || 0) - 1, 0);
+            }
+
+            await updateDoc(summaryDocRef, updateData);
+        }
+    } catch (error) {
+        console.error("Errore nell'aggiornare summaryTab durante l'eliminazione:", error);
+    }
+};
   //----------------------------------------------------------
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -192,7 +237,6 @@ export function EditRegister() {
     const docRef = doc(db, "registerTab", idRegister);
   
     try {
-      // 1️⃣ Recupera i dati attuali del documento
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         notifyError("Errore: appuntamento non trovato!");
@@ -200,11 +244,7 @@ export function EditRegister() {
       }
   
       const oldData = docSnap.data();
-      // Puoi utilizzare oldData se ti serve per il riepilogo o altri controlli
-      // const oldDurata = oldData.durata;
-      // const oldGiorno = oldData.giorno;
   
-      // 2️⃣ Controllo dei conflitti: verifica se l'intervallo [newStart, newEnd) si sovrappone ad altri appuntamenti
       const newStart = selectedTime.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
       const newEnd = oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
       
@@ -216,12 +256,10 @@ export function EditRegister() {
       const querySnapshot = await getDocs(q);
       let conflict = false;
       querySnapshot.forEach(docSnap => {
-        // Escludi il documento corrente dalla verifica in modalità modifica
         if (docSnap.id === idRegister) return;
         const data = docSnap.data();
         const existingStart = data.ora && data.ora.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
         const existingEnd = data.oraFine && data.oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
-        // Se l'intervallo del nuovo appuntamento si sovrappone a quello esistente, segnala conflitto
         if (newStart < existingEnd && newEnd > existingStart) {
           conflict = true;
         }
@@ -231,16 +269,14 @@ export function EditRegister() {
         return;
       }
   
-      // 3️⃣ Prepariamo i nuovi dati da aggiornare
       const dataToUpdate = {
         durata,
         giorno: selectedDate,
         ora: selectedTime,
-        oraFine,
+        oraFine: selectedTimeEnd,
         note,
       };
   
-      // Aggiorniamo i dati del paziente e della prestazione
       const selectedCustomer = pazienti.find(p => p.id === selectedCustomerId);
       dataToUpdate.pazienteId = selectedCustomerId;
       dataToUpdate.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
@@ -250,10 +286,8 @@ export function EditRegister() {
       dataToUpdate.prestazioniId = selectedPrestazioniId;
       dataToUpdate.nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
   
-      // 4️⃣ Aggiorna il documento nel registro
       await updateDoc(docRef, dataToUpdate);
   
-      // 5️⃣ Aggiorna il riepilogo su summaryTab (se necessario)
       await updateSummaryTabOnEdit(oldData, dataToUpdate);
   
       successNoty("Prestazione Aggiornata!");
@@ -263,9 +297,29 @@ export function EditRegister() {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      const docRef = doc(db, "registerTab", idRegister);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        notifyError("Registro non trovato");
+        setOpenDeleteDialog(false);
+        return;
+      }
+      const oldData = docSnap.data();
+      await updateSummaryTabOnDelete(oldData);
+      await deleteDoc(docRef);
+      successNoty("Registro eliminato con successo!");
+      navigate("/registerlist");
+    } catch (error) {
+      console.error("Errore nell'eliminazione del registro: ", error);
+      notifyError("Errore nell'eliminazione del registro");
+    } finally {
+      setOpenDeleteDialog(false);
+    }
+  };
 
   //----------------------------------------------------------
-  // Mostra un loader se i dati del registro non sono ancora stati caricati
   if (loadingRegister) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
@@ -283,7 +337,7 @@ export function EditRegister() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="overflow-auto"
         style={{ minHeight: "80vh" }}
-        >
+      >
         <div className="container-fluid">
           {!matches && <h2 className="titlePage">Modifica Appuntamento/Registro</h2>}
           <IconButton className="p-0" onClick={() => navigate("/registerlist")}>
@@ -371,7 +425,6 @@ export function EditRegister() {
                   )}
                 />
               </div>
-              {/* Campi per data e orario */}
               <h6 className="mb-0 mt-4">Dettagli della Visita</h6>
               <div className="mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3">
                 <TextField
@@ -385,14 +438,21 @@ export function EditRegister() {
                 />
                 <TextField
                   className="w-100"
-                  label="Ora"
+                  label="Ora Ingresso"
                   type="time"
                   value={selectedTime}
                   onChange={handleChangeTime}
                   InputLabelProps={{ shrink: true }}
                 />
+                <TextField
+                    className="w-100"
+                    label="Ora Uscita"
+                    type="time"
+                    value={selectedTimeEnd}
+                    onChange={handleChangeTimeEnd}
+                    InputLabelProps={{ shrink: true }}
+                  />
               </div>
-              {/* Selezione della durata */}
               <div className="mt-4 col-lg-4 col-md-6 col-sm-12">
                 <FormControl fullWidth color="primary">
                   <InputLabel id="durata-select-label">Durata</InputLabel>
@@ -409,7 +469,6 @@ export function EditRegister() {
                   </Select>
                 </FormControl>
               </div>
-              {/* Campo per le note */}
               <div className="mt-4 col-lg-4 col-md-6 col-sm-12">
                 <TextField
                   label="Note"
@@ -442,9 +501,37 @@ export function EditRegister() {
               </div>
             </div>
             <Button className="mt-4 w-100 py-2" type="submit" variant="contained">Modifica</Button>
+            {/* Pulsante per eliminare la registrazione */}
+            <Button
+              className="mt-2 w-100 py-2"
+              variant="contained"
+              color="error"
+              onClick={() => setOpenDeleteDialog(true)}
+            >
+              Elimina Registrazione
+            </Button>
           </form>
         </div>
       </motion.div>
+
+      {/* Dialog di conferma per eliminare la registrazione */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>Conferma Eliminazione</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Sei sicuro di voler eliminare questa registrazione? L'operazione non potrà essere annullata.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>Annulla</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">
+            Elimina
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
