@@ -100,24 +100,43 @@ function App() {
       {matches && <BottomNavi />}
       
       {/* Mostra il popup di installazione se disponibile */}
-    <Snackbar
-        open={showInstallPrompt}
-        onClose={() => setShowInstallPrompt(false)}
-        message="Vuoi installare questa app?"
-        action={
-          <Button color="primary" onClick={handleInstallClick}>
-            Installa
-          </Button>
-        }
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} // Posizione sopra
-        sx={{
-          position: 'fixed',
-          top: '50%', // Posiziona al centro verticale
-          left: '50%', // Posiziona al centro orizzontale
-          transform: 'translate(-50%, -50%)', // Centra perfettamente
-          zIndex: 1300,
-        }} // Imposta la posizione
+      {showInstallPrompt && (
+  <>
+    {/* Overlay per lo sfondo semitrasparente */}
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Colore semitrasparente (nero)
+        zIndex: 1300, // Posiziona sotto la Snackbar
+      }}
+      onClick={() => setShowInstallPrompt(false)} // Consente di chiudere lo snackbar quando si clicca sull'overlay
     />
+  
+    {/* La Snackbar, che si sovrappone sopra l'overlay */}
+    <Snackbar
+      open={showInstallPrompt}
+      onClose={() => setShowInstallPrompt(false)}
+      message="Vuoi installare questa app?"
+      action={
+        <Button color="primary" onClick={handleInstallClick}>
+          Installa
+        </Button>
+      }
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} // Posizione sopra
+      sx={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1301,
+      }} 
+    />
+  </>
+)}
 
     </Router>
   );

@@ -42,7 +42,7 @@ return (
 {(isAuth || isAuthUser) && 
 <Paper 
   sx={{ 
-    zIndex: '99999',
+    zIndex: '999',
     position: 'fixed', 
     bottom: 0, 
     left: 0, 

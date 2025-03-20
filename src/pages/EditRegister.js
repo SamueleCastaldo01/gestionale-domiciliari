@@ -146,16 +146,20 @@ export function EditRegister() {
     setSelectedTime(event.target.value);
   };
 
+
   const handleChangeTimeEnd = (event) => {
     const newTime = event.target.value;
-    const minTime = calculateEndTime(selectedTime, durata);
-    if (newTime < minTime) {
-      notifyError("L'orario di uscita non può essere inferiore all'orario di ingresso più la durata.");
-      setSelectedTimeEnd(minTime);
+    // Converte l'orario in minuti (ore * 60 + minuti) per il confronto
+    const selectedTimeInMinutes = selectedTime.split(':').reduce((acc, time) => acc * 60 + parseInt(time), 0);
+    const newTimeInMinutes = newTime.split(':').reduce((acc, time) => acc * 60 + parseInt(time), 0);
+    
+    if (newTimeInMinutes < selectedTimeInMinutes) {
+      setSelectedTimeEnd(selectedTime);
     } else {
       setSelectedTimeEnd(newTime);
     }
   };
+  
 
   //----------------------------------------------------------
   const updateSummaryTabOnEdit = async (oldData, newData) => {
@@ -428,15 +432,6 @@ export function EditRegister() {
               <h6 className="mb-0 mt-4">Dettagli della Visita</h6>
               <div className="mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3">
                 <TextField
-                  disabled
-                  className="w-100"
-                  label="Giorno"
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleChangeDate}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
                   className="w-100"
                   label="Ora Ingresso"
                   type="time"
@@ -453,7 +448,16 @@ export function EditRegister() {
                     InputLabelProps={{ shrink: true }}
                   />
               </div>
-              <div className="mt-4 col-lg-4 col-md-6 col-sm-12">
+              <div className="mt-4 col-lg-4 col-md-6 col-sm-12 d-flex gap-3">
+              <TextField
+                  disabled
+                  className="w-100"
+                  label="Giorno"
+                  type="date"
+                  value={selectedDate}
+                  onChange={handleChangeDate}
+                  InputLabelProps={{ shrink: true }}
+                />
                 <FormControl fullWidth color="primary">
                   <InputLabel id="durata-select-label">Durata</InputLabel>
                   <Select

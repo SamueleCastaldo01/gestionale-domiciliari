@@ -161,10 +161,10 @@ export function AddCliente() {
                             <TextField className='w-100' type='number' label="Numero di Telefono" variant="outlined" color='primary' value={telefono} onChange={(e) => setTelefono(e.target.value)} />
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
-                            <TextField className='w-100' type='date' label="Inizio Pai" variant="outlined" color='primary' value={dataInizioPai} onChange={(e) => setDataInizioPai(e.target.value)} InputLabelProps={{ shrink: true }} />
+                            <TextField required className='w-100' type='date' label="Inizio Pai" variant="outlined" color='primary' value={dataInizioPai} onChange={(e) => setDataInizioPai(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
-                            <TextField className='w-100' type='date' label="Fine Pai" variant="outlined" color='primary' value={dataFinePai} onChange={(e) => setDataFinePai(e.target.value)} InputLabelProps={{ shrink: true }} />
+                            <TextField required className='w-100' type='date' label="Fine Pai" variant="outlined" color='primary' value={dataFinePai} onChange={(e) => setDataFinePai(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </div>
 
                         {/* Optional Fields Section */}
