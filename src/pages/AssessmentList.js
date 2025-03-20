@@ -21,8 +21,9 @@ export function AssessmentList() {
 
   const [summaryData, setSummaryData] = useState([]);
   const [loading, setLoading] = useState(false);
-  // Stato per gestire individualmente il valore NFC di ogni record
   const [nfcValues, setNfcValues] = useState({});
+  const [totalNfc, setTotalNfc] = useState(0);
+  const [totalAccessi, setTotalAccessi] = useState(0);
 
   const [searchMonth, setSearchMonth] = useState(() => {
     const now = new Date();
@@ -42,11 +43,18 @@ export function AssessmentList() {
 
       // Inizializza i valori NFC per ogni record
       const initialNfcValues = {};
+      let totalNfcCount = 0;
+      let totalAccessiCount = 0;
+
       fetchedData.forEach(item => {
-        // Se il campo nfc è definito, usalo; altrimenti, impostalo a una stringa vuota
         initialNfcValues[item.id] = item.nfc !== undefined ? item.nfc : "";
+        totalNfcCount += item.nfc ? Number(item.nfc) : 0;
+        totalAccessiCount += item.numeroAccessi ? Number(item.numeroAccessi) : 0;
       });
+
       setNfcValues(initialNfcValues);
+      setTotalNfc(totalNfcCount);
+      setTotalAccessi(totalAccessiCount);
     } catch (error) {
       console.error("Errore nel recupero dei dati:", error);
     } finally {
@@ -55,7 +63,6 @@ export function AssessmentList() {
   };
 
   const handleEdit = async (id, newNfc) => {
-    // Se il nuovo valore è una stringa vuota, lo consideriamo come 0
     if (newNfc === "") newNfc = 0;
     try {
       const docRef = doc(db, "summaryTab", id);
@@ -72,10 +79,14 @@ export function AssessmentList() {
     const [year, month] = searchMonth.split("-");
     doc.text(`Riepilogo Mensile - ${month}/${year}`, 14, 15);
 
-    const tableColumn = columns.map(col => col.headerName);
+    doc.text(`Totale NFC: ${totalNfc}`, 14, 25);
+    doc.text(`Totale Accessi: ${totalAccessi}`, 14, 32);
+
+    const tableColumn = ["Nome Paziente", "Codice Fiscale", "NFC", "N. Accessi", "30 min", "45 min", "60 min"];
     const tableRows = summaryData.map(row => [
       row.nomeCompleto,
-      row.codiceFiscale,
+      row.codiceFiscale, 
+      row.nfc !== undefined ? row.nfc : "0",
       row.numeroAccessi,
       row.count30,
       row.count45,
@@ -85,7 +96,7 @@ export function AssessmentList() {
     autoTable(doc, { 
       head: [tableColumn],
       body: tableRows,
-      startY: 25,
+      startY: 40,
       styles: { fontSize: 10 },
       headStyles: { fillColor: [22, 160, 133] },
     });
@@ -96,15 +107,6 @@ export function AssessmentList() {
   useEffect(() => {
     fetchSummaryData();
   }, [uid, searchMonth]);
-
-  const columns = [
-    { field: "nomeCompleto", headerName: "Nome Paziente", width: 200 },
-    { field: "Codice Fiscale", headerName: "Codice Fiscale", width: 200 },
-    { field: "numeroAccessi", headerName: "N. Accessi", width: 120 },
-    { field: "count30", headerName: "30 min", width: 100 },
-    { field: "count45", headerName: "45 min", width: 100 },
-    { field: "count60", headerName: "60 min", width: 100 },
-  ];
 
   return (
     <>
@@ -124,32 +126,41 @@ export function AssessmentList() {
           {loading && <p>Caricamento...</p>}
           {!loading && matches && (
             <>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={generatePDF}
-                startIcon={<DownloadIcon />}
-                sx={{ marginBottom: "1rem" }}
-              >
-                Scarica PDF
-              </Button>
+              {summaryData.length > 0 && (
+                <div >
+                  <div className="d-flex justify-content-between align-items-center">
+                    <p className="mb-0">Totale NFC: {totalNfc}</p>
+                    <p className="mb-0">Totale Accessi: {totalAccessi}</p>
+                    <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={generatePDF}
+                    startIcon={<DownloadIcon />}
+                  > PDF
+                  </Button>
+                  </div>
+                 
+
+                </div>
+              )}
               <div className="div-customer mt-3 overflow-auto pb-4" style={{ maxHeight: "75vh", overflowY: "auto" }}>
                 {summaryData.map((item) => (
                   <div key={item.pazienteId} className="customer d-flex align-items-center justify-content-between py-3">
                     <div className="d-flex flex-column align-content-center justify-content-center">
                       <h5 style={{ fontSize: "17px", fontWeight: "400" }} className="mb-0">{item.nomeCompleto}</h5>
-                      <h5 style={{ fontSize: "15px", fontWeight: "400", color: "gray" }} className="mt-1 mb-0">C. F.: {item.codiceFiscale}</h5>
+                      <h5 style={{ fontSize: "15px", fontWeight: "400", color: "gray" }} className="mt-1 mb-0">C.F. = {item.codiceFiscale}</h5>
                       <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>Numero Accessi: {item.numeroAccessi}</p>
                       <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>
-                        30': {item.count30} | 45': {item.count45} | 60': {item.count60}
+                        30'= {item.count30} | 45'= {item.count45} | 60'= {item.count60}
                       </p>
                     </div>
-                    <div className="d-flex flex-column justify-content-center align-items-center">
+                    <div style={{top: "6px"}}
+                     className="d-flex flex-column justify-content-center align-items-center position-relative">
                       <form
                         className="d-flex flex-column justify-content-center align-items-center"
                         onSubmit={(e) => {
                           e.preventDefault();
-                          handleEdit(item.id, nfcValues[item.id]); // Invia il valore specifico per questo record
+                          handleEdit(item.id, nfcValues[item.id]);
                         }}
                       >
                         <TextField 
@@ -169,12 +180,6 @@ export function AssessmentList() {
                 ))}
               </div>
             </>
-          )}
-
-          {!loading && !matches && (
-            <div style={{ height: 500, width: "100%" }}>
-              <StyledDataGrid rows={summaryData} columns={columns} getRowId={(row) => row.pazienteId} localeText={itIT.components.MuiDataGrid.defaultProps.localeText} />
-            </div>
           )}
         </div>
       </motion.div>

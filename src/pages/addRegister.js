@@ -169,6 +169,7 @@ export function AddRegister() {
           uid,
           mese,
           pazienteId,
+          nfc: "0",
           nomeCompleto,
           codiceFiscale, 
           numeroAccessi: 1,
