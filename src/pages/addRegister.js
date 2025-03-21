@@ -93,17 +93,25 @@ export function AddRegister() {
     }
   };
 
-  // --- Fetch per la modalità "Appuntamento" ---
   const fetchAppointments = async () => {
     try {
       setLoadingAppointments(true);
       const appointmentCollection = collection(db, "bookingTab");
-      const appointmentQuery = query(appointmentCollection, where("uid", "==", uid), where("giorno", "==", selectedDate));
+      const appointmentQuery = query(appointmentCollection, where("uid", "==", uid), where("giorno", "==", selectedDate), where("stateRegister", "==", false));
       const appointmentSnapshot = await getDocs(appointmentQuery);
       const appointmentList = appointmentSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+  
+      appointmentList.sort((a, b) => {
+        const timeToMinutes = (time) => {
+          const [hours, minutes] = time.split(":").map(Number);
+          return hours * 60 + minutes;
+        };
+        return timeToMinutes(a.ora) - timeToMinutes(b.ora);
+      });
+  
       setAppointments(appointmentList);
     } catch (error) {
       console.error("Errore nel recupero degli appuntamenti: ", error);
@@ -111,6 +119,7 @@ export function AddRegister() {
       setLoadingAppointments(false);
     }
   };
+  
 
   // Se l'utente sceglie "Nuovo" partiamo a caricare pazienti e prestazioni
   useEffect(() => {
@@ -213,7 +222,7 @@ export function AddRegister() {
       const data = docSnap.data();
       const existingStart = data.ora && data.ora.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
       const existingEnd = data.oraFine && data.oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
-      // Verifica se l'intervallo [newStart, newEnd) si sovrappone all'intervallo [existingStart, existingEnd)
+      // Verifica se l'intervallo [newStart, newEnd) si sovrappone a quello [existingStart, existingEnd)
       if (newStart < existingEnd && newEnd > existingStart) {
         conflict = true;
       }
@@ -263,12 +272,18 @@ export function AddRegister() {
       dataToAdd.linkIndirizzo = selectedBooking.linkIndirizzo;
       dataToAdd.prestazioniId = selectedBooking.prestazioniId;
       dataToAdd.nomePrestazione = selectedBooking.nomePrestazione;
-      dataToAdd.codiceFiscale = selectedBooking.codiceFiscale;  // 👈 Aggiunto codice fiscale
+      dataToAdd.codiceFiscale = selectedBooking.codiceFiscale;
     }
   
     try {
       await addDoc(collection(db, 'registerTab'), dataToAdd);
-      await updateSummaryTab(dataToAdd); // 👈 Passa codice fiscale a summaryTab
+      await updateSummaryTab(dataToAdd);
+  
+      if (selectedBooking) {
+        const bookingDocRef = doc(db, 'bookingTab', selectedBooking.id);
+        await updateDoc(bookingDocRef, { stateRegister: true });
+      }
+  
       handleReset();
       navigate("/registerlist");
       successNoty("Prestazione Aggiunta!");
@@ -276,6 +291,7 @@ export function AddRegister() {
       console.error('Errore nell\'aggiunta dell\'appuntamento: ', error);
     }
   };
+  
   
 
   return (
