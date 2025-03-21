@@ -211,6 +211,7 @@ export function AddBooking() {
             codiceFiscale,
             pazienteId: selectedCustomerId,
             nomeCompleto,
+            stateRegister: false,
             linkIndirizzo,
             prestazioniId: selectedPrestazioniId,
             nomePrestazione,

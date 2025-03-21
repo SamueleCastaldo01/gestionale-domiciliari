@@ -468,11 +468,46 @@ export function AddRegister() {
                         <div className='mt-2'>
                           {selectedCustomerId && selectedPaiDate !== "N/A" && (
                             isPaiExpired ? 
-                            <p className='mb-0'>Il Pai è scaduto il: <span style={{color: "red"}}>{selectedPaiDate}</span></p>
+                            <p style={{fontSize: "14px"}} className='mb-0'>Il Pai è scaduto il: <span style={{color: "red"}}>{selectedPaiDate}</span></p>
                             :
-                            <p className='mb-0'>Il Pai scade il: {selectedPaiDate}</p>
+                            <p style={{fontSize: "14px"}} className='mb-0'>Il Pai scade il: {selectedPaiDate}</p>
                           )}
                         </div>
+                        <Autocomplete
+                        className='mt-3'
+                        options={prestazioni}
+                        loading={loadingAutoComplete}
+                        getOptionLabel={(option) => `${option.prestazioni}`}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            <Box>
+                              <Typography variant="body1">
+                                {option.prestazioni}
+                              </Typography>
+                            </Box>
+                          </li>
+                        )}
+                        onChange={(event, value) => {
+                          if (value) setSelectedPrestazioniId(value.id);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Prestazioni"
+                            variant="outlined"
+                            fullWidth
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              )
+                            }}
+                          />
+                        )}
+                      />
                     </div>
                   </>
                 )}
