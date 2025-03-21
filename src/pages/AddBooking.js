@@ -27,6 +27,8 @@ export function AddBooking() {
 
     const [selectedDate, setSelectedDate] = useState(date || "");
     const [selectedTime, setSelectedTime] = useState(time || "");
+    const [selectedPaiDate, setSelectedPaiDate] = useState("");
+    const [isPaiExpired, setIsPaiExpired] = useState(false);
     const [pazienti, setPazienti] = useState([]);
     const [prestazioni, setPrestazioni] = useState([]);
     const [note, setNote] = useState("");
@@ -260,41 +262,102 @@ export function AddBooking() {
                                 value={pazienti.find(option => option.id === selectedCustomerId) || null}
                                 loading={loadingAutoComplete}
                                 getOptionLabel={(option) => `${option.nome} ${option.cognome}`}
-                                renderOption={(props, option) => (
+                                renderOption={(props, option) => {
+                                    let isExpired = false;
+                                    if (!option.dataFinePai) {
+                                    isExpired = true;
+                                    } else {
+                                    const parts = option.dataFinePai.split("-");
+                                    if (parts.length === 3) {
+                                        const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                                        const compareDate = new Date(selectedDate);
+                                        if (parsedDate < compareDate) {
+                                        isExpired = true;
+                                        }
+                                    }
+                                    }
+
+                                    return (
                                     <li {...props} key={option.id}>
-                                    <Box>
-                                        <Typography variant="body1">
-                                        {option.nome} {option.cognome}
+                                        <Box>
+                                        <Typography variant="body1" sx={{ color: isExpired ? 'red' : 'inherit' }}>
+                                            {option.nome} {option.cognome}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                        {option.codiceFiscale}
+                                            {option.codiceFiscale}
                                         </Typography>
-                                    </Box>
+                                        </Box>
                                     </li>
-                                )}
+                                    );
+                                }}
                                 onChange={(event, value) => {
                                     if (value) {
                                     onCustomerSelect(value.id);
+                                    setSelectedPaiDate(value.dataFinePai || "N/A");
+
+                                    // Controllo se il Pai è scaduto
+                                    let expired = false;
+                                    if (!value.dataFinePai) {
+                                        expired = true;
+                                    } else {
+                                        const parts = value.dataFinePai.split("-");
+                                        if (parts.length === 3) {
+                                        const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                                        const compareDate = new Date(selectedDate);
+                                        if (parsedDate < compareDate) {
+                                            expired = true;
+                                        }
+                                        }
+                                    }
+                                    setIsPaiExpired(expired);
                                     }
                                 }}
-                                renderInput={(params) => (
+                                renderInput={(params) => {
+                                    const selectedOption = pazienti.find(option => option.id === selectedCustomerId);
+                                    let isExpired = false;
+                                    if (selectedOption) {
+                                    if (!selectedOption.dataFinePai) {
+                                        isExpired = true;
+                                    } else {
+                                        const parts = selectedOption.dataFinePai.split("-");
+                                        if (parts.length === 3) {
+                                        const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                                        const compareDate = new Date(selectedDate);
+                                        if (parsedDate < compareDate) {
+                                            isExpired = true;
+                                        }
+                                        }
+                                    }
+                                    }
+
+                                    return (
                                     <TextField
-                                    {...params}
-                                    label="Seleziona paziente"
-                                    variant="outlined"
-                                    fullWidth
-                                    InputProps={{
+                                        {...params}
+                                        label="Seleziona paziente"
+                                        variant="outlined"
+                                        fullWidth
+                                        InputProps={{
                                         ...params.InputProps,
+                                        style: { color: isExpired ? 'red' : 'inherit' },
                                         endAdornment: (
-                                        <>
+                                            <>
                                             {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
                                             {params.InputProps.endAdornment}
-                                        </>
+                                            </>
                                         ),
-                                    }}
+                                        }}
                                     />
-                                )}
+                                    );
+                                }}
                                 />
+                              <div className='mt-2'>
+                                {selectedCustomerId && selectedPaiDate !== "N/A" && (
+                                    isPaiExpired ? 
+                                    <p className='mb-0'>Il Pai è scaduto il: <span style={{color: "red"}}>{selectedPaiDate}</span></p>
+                                    :
+                                    <p className='mb-0'>Il Pai scade il: {selectedPaiDate}</p>
+                                )}
+                                </div>
                             </div>
                             <h6 className='mb-0 mt-4'>Dettagli della Visita</h6>
                             <div className='mt-4 col-lg-4 col-md-6 col-sm-12 d-flex justify-content-between gap-3'>
