@@ -8,6 +8,11 @@ body {
   overscroll-behavior-y: contain;
 }
 
+html, body {
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
 
 .MuiTablePagination-selectLabel {
   margin-bottom: 0px;

@@ -233,7 +233,7 @@ export function AddBooking() {
                 successNoty("Appuntamento aggiunto!");
             }
             handleReset();
-            navigate("/appuntamenti");
+            navigate(`/appuntamenti?giorno=${selectedDate}`);
         } catch (error) {
             console.error('Errore nell\'aggiunta/aggiornamento dell\'appuntamento: ', error);
         }

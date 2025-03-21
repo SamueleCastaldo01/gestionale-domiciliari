@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSelector } from "react-redux";
@@ -12,11 +13,27 @@ function Booking() {
   const matches = useMediaQuery("(max-width:920px)");
   const user = useSelector((state) => state.auth.user);
   const uid = user?.uid;
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const giornoSelezionato = params.get('giorno');
 
   // Imposta la data odierna come valore iniziale (oggetto dayjs)
   const [selectedDate, setSelectedDate] = useState(dayjs());
 
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (giornoSelezionato) {
+      // Interpretiamo il parametro come una data nel formato "YYYY-MM-DD"
+      const paramDate = dayjs(giornoSelezionato, "YYYY-MM-DD");
+      // Se il parametro è una data precedente a oggi, usiamo dayjs() (oggi)
+      if (paramDate.isBefore(dayjs(), "day")) {
+        setSelectedDate(dayjs());
+      } else {
+        setSelectedDate(paramDate);
+      }
+    }
+  }, [giornoSelezionato]);
 
   return (
     <>
@@ -27,14 +44,13 @@ function Booking() {
         transition={{ duration: 0.7 }}
       >
         <div className="px-2 px-lg-0">
-          {/* Calendario orizzontale per selezionare la data */}
+          {/* Il calendario orizzontale mostra sempre le date a partire da oggi */}
           <CalendarHorizontal
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
           />
 
           <div className="mt-4">
-            {/* Passiamo anche uid così che DailySchedule possa filtrare le prenotazioni */}
             <DailySchedule selectedDate={selectedDate} uid={uid} />
           </div>
         </div>
