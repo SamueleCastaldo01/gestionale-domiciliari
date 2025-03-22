@@ -283,7 +283,7 @@ export function CustomerList() {
               onClick={() => { navigate(`/customerinfo?id=${customer.id}`); }}
             >
             <div>
-              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-1'>{customer.nome} {customer.cognome}</h5>
+              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-1'>{customer.cognome} {customer.nome}</h5>
               {customer.telefono && <p className='mb-0' style={{color: "gray", fontSize: "14px"}}>Tel: {customer.telefono}</p>}
             </div>
             <div>

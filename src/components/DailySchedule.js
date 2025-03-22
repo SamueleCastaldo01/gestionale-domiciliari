@@ -169,7 +169,7 @@ const DailySchedule = ({ selectedDate, uid }) => {
               {bookingForSlot ? (
                 <div className="w-100" onClick={() => handleEdit(bookingForSlot.id)}>
                   <h6 className="fw-bold mb-0" style={{ color: "#037e67" }}>
-                    {bookingForSlot.nomeCompleto}
+                    {bookingForSlot.cognome} {bookingForSlot.nome}
                   </h6>
                   <p className="mb-0" style={{color: "gray", fontSize: "14px", marginTop: "1px"}}>
                     CF: {bookingForSlot.codiceFiscale}

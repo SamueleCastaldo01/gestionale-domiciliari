@@ -37,24 +37,56 @@ export function AssessmentList() {
   const fetchSummaryData = async () => {
     if (!uid) return;
     setLoading(true);
+    
     try {
       const summaryCollection = collection(db, "summaryTab");
       const q = query(summaryCollection, where("uid", "==", uid), where("mese", "==", searchMonth));
       const snapshot = await getDocs(q);
-      const fetchedData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setSummaryData(fetchedData);
-
-      // Inizializza i valori NFC per ogni record
+      
+      let fetchedData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  
+      // Mappa per salvare i dati dei pazienti
+      const customerData = {};
+  
+      for (const item of fetchedData) {
+        const customerSnap = await getDocs(query(collection(db, "customersTab"), where("__name__", "==", item.pazienteId)));
+  
+        if (!customerSnap.empty) {
+          const customer = customerSnap.docs[0].data();
+          customerData[item.pazienteId] = {
+            nome: customer.nome || "",
+            cognome: customer.cognome || "",
+          };
+        }
+      }
+  
+      fetchedData = fetchedData.map((item) => ({
+        ...item,
+        nome: customerData[item.pazienteId]?.nome || "Sconosciuto",
+        cognome: customerData[item.pazienteId]?.cognome || "",
+      }));
+  
+      // **Ordinamento per COGNOME, poi per NOME**
+      fetchedData.sort((a, b) => {
+        const cognomeA = a.cognome.toLowerCase();
+        const cognomeB = b.cognome.toLowerCase();
+        const nomeA = a.nome.toLowerCase();
+        const nomeB = b.nome.toLowerCase();
+  
+        return cognomeA.localeCompare(cognomeB) || nomeA.localeCompare(nomeB);
+      });
+  
       const initialNfcValues = {};
       let totalNfcCount = 0;
       let totalAccessiCount = 0;
-
-      fetchedData.forEach(item => {
+  
+      fetchedData.forEach((item) => {
         initialNfcValues[item.id] = item.nfc !== undefined ? item.nfc : "";
         totalNfcCount += item.nfc ? Number(item.nfc) : 0;
         totalAccessiCount += item.numeroAccessi ? Number(item.numeroAccessi) : 0;
       });
-
+  
+      setSummaryData(fetchedData);
       setNfcValues(initialNfcValues);
       setTotalNfc(totalNfcCount);
       setTotalAccessi(totalAccessiCount);
@@ -64,6 +96,7 @@ export function AssessmentList() {
       setLoading(false);
     }
   };
+  
 
   const handleEdit = async (id, newNfc) => {
     if (newNfc === "") newNfc = 0;
@@ -90,20 +123,52 @@ export function AssessmentList() {
     doc.text(`Totale NFC: ${totalNfc}    Totale Accessi: ${totalAccessi}`, 14, 22);
   
     const tableColumn = [
-      "Nome Paziente",
+      "Cognome e Nome", // Modificato per mostrare prima il cognome
       "Codice Fiscale",
       "NFC",
       "30 min",
       "45 min",
       "60 min",
     ];
-    const tableRows = summaryData.map((row) => [
-      row.nomeCompleto,
-      row.codiceFiscale,
-      row.nfc !== undefined ? row.nfc : "0",
-      row.count30,
-      row.count45,
-      row.count60,
+  
+    let totalNfcSum = 0;
+    let total30 = 0;
+    let total45 = 0;
+    let total60 = 0;
+  
+    // **Ordinamento per cognome prima di generare il PDF**
+    const sortedData = [...summaryData].sort((a, b) => {
+      const cognomeA = a.cognome.toLowerCase();
+      const cognomeB = b.cognome.toLowerCase();
+      const nomeA = a.nome.toLowerCase();
+      const nomeB = b.nome.toLowerCase();
+      return cognomeA.localeCompare(cognomeB) || nomeA.localeCompare(nomeB);
+    });
+  
+    const tableRows = sortedData.map((row) => {
+      totalNfcSum += row.nfc ? Number(row.nfc) : 0;
+      total30 += row.count30 ? Number(row.count30) : 0;
+      total45 += row.count45 ? Number(row.count45) : 0;
+      total60 += row.count60 ? Number(row.count60) : 0;
+  
+      return [
+        `${row.cognome} ${row.nome}`, // Cognome prima del nome
+        row.codiceFiscale || "-",
+        row.nfc !== undefined ? row.nfc : "0",
+        row.count30 || 0,
+        row.count45 || 0,
+        row.count60 || 0,
+      ];
+    });
+  
+    // Aggiunta della riga totale
+    tableRows.push([
+      "Totale",
+      "",
+      totalNfcSum,
+      total30,
+      total45,
+      total60,
     ]);
   
     autoTable(doc, {
@@ -112,11 +177,14 @@ export function AssessmentList() {
       startY: 28, // Ridotto per diminuire lo spazio tra il testo e la tabella
       styles: { fontSize: 10 },
       headStyles: { fillColor: [22, 160, 133] },
+      footStyles: { fillColor: [200, 200, 200] }, // Colore riga totale (opzionale)
     });
   
     // Salva il file con il formato nome_operatore_data.pdf
     doc.save(`${operatorName}_${month}_${year}.pdf`);
   };
+  
+  
   
 
   useEffect(() => {
@@ -175,7 +243,7 @@ export function AssessmentList() {
                 {summaryData.map((item) => (
                   <div key={item.pazienteId} className="customer d-flex align-items-center justify-content-between py-3">
                     <div className="d-flex flex-column align-content-center justify-content-center">
-                      <h5 style={{ fontSize: "17px", fontWeight: "400" }} className="mb-0">{item.nomeCompleto}</h5>
+                      <h5 style={{ fontSize: "17px", fontWeight: "400" }} className="mb-0">{item.cognome} {item.nome}</h5>
                       <h5 style={{ fontSize: "15px", fontWeight: "400", color: "gray" }} className="mt-1 mb-0">C.F. = {item.codiceFiscale}</h5>
                       <h5 style={{ fontSize: "15px", fontWeight: "400", color: "gray" }} className="mt-1 mb-0">Numero Accessi = {item.numeroAccessi}</h5>
                       <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>

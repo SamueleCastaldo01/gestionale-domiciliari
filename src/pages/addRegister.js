@@ -255,6 +255,8 @@ export function AddRegister() {
       const selectedCustomer = pazienti.find(p => p.id === selectedCustomerId);
       dataToAdd.pazienteId = selectedCustomerId;
       dataToAdd.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
+      dataToAdd.nome = selectedCustomer ? `${selectedCustomer.nome}` : "";
+      dataToAdd.cognome = selectedCustomer ? `${selectedCustomer.cognome}` : "";
       dataToAdd.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
       dataToAdd.codiceFiscale = selectedCustomer ? selectedCustomer.codiceFiscale : "";  // 👈 Aggiunto codice fiscale
   
@@ -269,6 +271,8 @@ export function AddRegister() {
   
       dataToAdd.pazienteId = selectedBooking.pazienteId;
       dataToAdd.nomeCompleto = selectedBooking.nomeCompleto;
+      dataToAdd.nome = selectedBooking.nome;
+      dataToAdd.cognome = selectedBooking.cognome;
       dataToAdd.linkIndirizzo = selectedBooking.linkIndirizzo;
       dataToAdd.prestazioniId = selectedBooking.prestazioniId;
       dataToAdd.nomePrestazione = selectedBooking.nomePrestazione;
@@ -329,7 +333,7 @@ export function AddRegister() {
               <Autocomplete className='mt-0'
                 options={appointments}
                 loading={loadingAppointments}
-                getOptionLabel={(option) => `${option.nomeCompleto} (${option.ora} - ${option.oraFine})`}
+                getOptionLabel={(option) => `${option.cognome} ${option.nome} (${option.ora} - ${option.oraFine})`}
                 onChange={(event, value) => {
                   if (value) {
                     setSelectedBooking(value);
@@ -516,7 +520,8 @@ export function AddRegister() {
                 {mode === "appuntamento" && selectedBooking && (
                   <>
                     <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
-                      <TextField label="Paziente" value={selectedBooking.nomeCompleto} variant="outlined" fullWidth disabled />
+                      <TextField label="Paziente"  value={`${selectedBooking.cognome || ""} ${selectedBooking.nome || ""}`.trim()} 
+                       variant="outlined" fullWidth disabled />
                     </div>
                     <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                     <Autocomplete

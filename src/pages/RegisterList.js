@@ -108,7 +108,7 @@ export function RegisterList() {
           <div key={customer.id} className='customer d-flex align-items-center justify-content-between py-3'
           onClick={() => {navigate(`/editregister?idregister=${customer.id}`)}}>
             <div>
-              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-0'>{customer.nomeCompleto}</h5>
+              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-0'>{customer.cognome} {customer.nome}</h5>
               <h5 style={{fontSize: "15px", fontWeight: "400", color:"gray"}} className='mt-1 mb-1'>Codice Fiscale: {customer.codiceFiscale}</h5>
               <p className='mb-0' style={{color: "gray", fontSize: "14px"}}>{customer.ora} - {customer.oraFine} 
                 <span className='ms-4 fw-medium'>Durata: {customer.durata}m</span> </p>
