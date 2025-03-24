@@ -33,9 +33,11 @@ export function Autodichiarazione() {
   // Stati per i dati dell'autodichiarazione, inizializzati da localStorage
   const [operatorName, setOperatorName] = useState(() => localStorage.getItem("nomeOperatore") || "");
   const [luogoDiNascita, setLuogoDiNascita] = useState(() => localStorage.getItem("luogoDiNascita") || "");
+  const [luogoResidenza, setLuogoResidenza] = useState(() => localStorage.getItem("luogoResidenza") || "");
   const [dataDiNascita, setDataDiNascita] = useState(() => localStorage.getItem("dataDiNascita") || "");
   const [codiceFiscaleOperatore, setCodiceFiscaleOperatore] = useState(() => localStorage.getItem("codiceFiscaleOperatore") || "");
-  const [ruoloOperatore, setRuoloOperatore] = useState(() => localStorage.getItem("ruoloOperaotre") || "");
+  const [ruoloOperatore, setRuoloOperatore] = useState(() => localStorage.getItem("ruoloOperatore") || "");
+
 
   // Stato per il Modal
   const [openModal, setOpenModal] = useState(false);
@@ -46,6 +48,7 @@ export function Autodichiarazione() {
   const handleSaveAutodichiarazione = () => {
     localStorage.setItem("nomeOperatore", operatorName);
     localStorage.setItem("luogoDiNascita", luogoDiNascita);
+    localStorage.setItem("luogoResidenza", luogoResidenza);
     localStorage.setItem("dataDiNascita", dataDiNascita);
     localStorage.setItem("codiceFiscaleOperatore", codiceFiscaleOperatore);
     localStorage.setItem("ruoloOperatore", ruoloOperatore);
@@ -99,6 +102,17 @@ export function Autodichiarazione() {
       setLoading(false);
     }
   };
+
+  const isFormComplete = () => {
+    return (
+      operatorName.trim() !== "" &&
+      luogoDiNascita.trim() !== "" &&
+      luogoResidenza.trim() !== "" &&
+      dataDiNascita.trim() !== "" &&
+      codiceFiscaleOperatore.trim() !== "" &&
+      ruoloOperatore.trim() !== ""
+    );
+  };
   
 
 
@@ -123,12 +137,12 @@ const generatePDF = () => {
         text: "consapevole che chiunque rilascia dichiarazioni mendaci è punito ai sensi del codice penale e delle leggi speciali in materia, ai sensi e per gli effetti dell'art. 46 D.P.R. n. 445/2000" 
       },
       { text: "dichiara", bold: true },
-      { text: "" },
       { text: "che sui pazienti di seguito indicati, alle date ed agli orari sotto riportati, non ha effettuato la registrazione degli accessi mediante il rilevatore elettronico di presenze (gong)." },
     ];
+
   
     // Stampa il testo dell'autodichiarazione centrato, con grassetto dove richiesto
-    doc.setFontSize(10);
+    doc.setFontSize(7);
     autodichText.forEach((line) => {
       doc.setFont("helvetica", line.bold ? "bold" : "normal");
       const splitted = doc.splitTextToSize(line.text, pageWidth - 2 * marginLeft);
@@ -165,13 +179,25 @@ const generatePDF = () => {
       headStyles: { fillColor: [22, 160, 133] },
       margin: { left: marginLeft, right: marginLeft }, // Riduci i margini
       didDrawPage: function (data) {
-        // Piè di pagina: luogo dell'operatore e data attuale
         const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
         doc.setFontSize(8);
-        doc.text(`Luogo: ${luogoDiNascita || "Luogo non inserito"}`, marginLeft, pageHeight - 8);
-        const currentDate = new Date().toLocaleDateString();
-        doc.text(`Data: ${currentDate}`, pageWidth - marginLeft - 40, pageHeight - 8);
-      }
+    
+        const luogoText = `Luogo: ${luogoResidenza || "Luogo non inserito"}`;
+        const dataText = `Data: ${new Date().toLocaleDateString()}`;
+    
+        // Calcola la larghezza del testo
+        const luogoWidth = doc.getTextWidth(luogoText);
+        const dataWidth = doc.getTextWidth(dataText);
+    
+        // Definisci il margine destro
+        const marginRight = 10;
+    
+        // Stampa entrambi sulla destra, allineati
+        doc.text(luogoText, pageWidth - luogoWidth - marginRight, pageHeight - 8);
+        doc.text(dataText, pageWidth - dataWidth - marginRight, pageHeight - 4);
+    }
+    
     });
   
     // Salva il file con nome dinamico
@@ -241,19 +267,29 @@ const generatePDF = () => {
                 onChange={(e) => setCodiceFiscaleOperatore(e.target.value)}
                 margin="normal"
               />
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Ruolo Operatore</InputLabel>
+              <FormControl className="mt-3" fullWidth color='primary'>
+                <InputLabel >Ruolo Operatore</InputLabel>
                 <Select
+                    labelId="durata-select-label"
+                    id="durata-select"
                     value={ruoloOperatore}
+                    label="Ruolo Operatore"
                     onChange={(e) => setRuoloOperatore(e.target.value)}
                 >
-                    <MenuItem value="infermiere">Infermiere</MenuItem>
+                      <MenuItem value="infermiere">Infermiere</MenuItem>
                     <MenuItem value="fisioterapista">Fisioterapista</MenuItem>
                     <MenuItem value="logopedista">Logopedista</MenuItem>
                     <MenuItem value="OSS">OSS</MenuItem>
                     <MenuItem value="Psicologo">Psicologo</MenuItem>
-                </Select>
+                  </Select>
                 </FormControl>
+                <TextField
+                fullWidth
+                label="Luogo Residenza"
+                value={luogoResidenza}
+                onChange={(e) => setLuogoResidenza(e.target.value)}
+                margin="normal"
+              />
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                 <Button onClick={handleCloseModal} sx={{ mr: 1 }}>Annulla</Button>
                 <Button variant="contained" onClick={handleSaveAutodichiarazione}>Salva</Button>
@@ -283,22 +319,25 @@ const generatePDF = () => {
           {loading && <p>Caricamento...</p>}
           {!loading && matches && (
             <>
-              {summaryData.length > 0 && (
-                <div>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <p className="mb-0">Totale NFC: {totalNfc}</p>
-                    <p className="mb-0">Totale Accessi: {totalAccessi}</p>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={generatePDF}
-                      startIcon={<DownloadIcon />}
-                    >
-                      PDF
-                    </Button>
-                  </div>
-                </div>
-              )}
+            {summaryData.length > 0 && (
+              <div className="d-flex justify-content-center align-items-center">
+                {isFormComplete() ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={generatePDF}
+                    startIcon={<DownloadIcon />}
+                  >
+                    PDF
+                  </Button>
+                ) : (
+                  <p style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>
+                    Compila tutti i campi per poter scaricare il PDF
+                  </p>
+                )}
+              </div>
+            )}
+
               <div className="div-customer mt-3 overflow-auto pb-4" style={{ maxHeight: "75vh", overflowY: "auto" }}>
                 {summaryData.map((item) => (
                   <div key={item.pazienteId} className="customer d-flex align-items-center justify-content-between py-3">
