@@ -193,7 +193,7 @@ export function AssessmentList() {
 
   return (
     <>
-      {matches && <NavMobile text="Riepilogo Mensile" page="" />}
+      {matches && <NavMobile text="Riepilogo Mensile" page="assessmentlist" />}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7 }}>
         <div className="container-fluid">
           {/* TextField per inserire il nome operatore */}

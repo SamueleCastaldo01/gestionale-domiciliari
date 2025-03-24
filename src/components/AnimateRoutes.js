@@ -21,6 +21,7 @@ import { AssessmentList } from '../pages/AssessmentList';
 import { CustomerInfo } from '../pages/CustomerInfo';
 import AppointmentViewer from '../pages/AppointmentViewer';
 import ViewRegister from '../pages/ViewRegister';
+import { Autodichiarazione } from '../pages/Autodichiarazione';
 
 
 function AnimateRoutes ()  {
@@ -59,6 +60,7 @@ return (
     <Route path="/viewregister" element={<ViewRegister />} /> 
     <Route path="/addprestazioni" element={<AddPrestazioni />} />
     <Route path="/assessmentList" element={<AssessmentList />} /> 
+    <Route path="/autodichiarazione" element={<Autodichiarazione />} /> 
 
     </Route>
 

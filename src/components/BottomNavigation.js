@@ -120,7 +120,7 @@ return (
     to="/assessmentList"
     label="Riepilogo"
     icon={<AssessmentIcon />}
-    data-selected={location.pathname === '/assessmentList' }
+    data-selected={location.pathname === '/assessmentList' || location.pathname === '/autodichiarazione' }
   />
 )}
 </BottomNavigation>

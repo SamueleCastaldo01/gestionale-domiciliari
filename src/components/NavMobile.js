@@ -5,6 +5,7 @@ import { IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import EventIcon from '@mui/icons-material/Event';
 import EditCalendarIcon from '@mui/icons-material/EditCalendar';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 export function NavMobile({text, page}) {
     const navigate = useNavigate();
@@ -47,6 +48,11 @@ export function NavMobile({text, page}) {
                 {page == "viewregister" &&
                 <IconButton onClick={() => {navigate("/registerlist")}}>
                     <EditCalendarIcon style={{fontSize: "24px", color: "black"}}/>
+                </IconButton>
+                }
+                {page == "assessmentlist" &&
+                <IconButton onClick={() => {navigate("/autodichiarazione")}}>
+                    <AssignmentIcon style={{fontSize: "24px", color: "black"}}/>
                 </IconButton>
                 }
             </div>
