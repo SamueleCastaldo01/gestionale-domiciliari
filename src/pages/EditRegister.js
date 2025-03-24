@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useSelector } from 'react-redux';
+import { Checkbox, FormControlLabel, FormLabel } from "@mui/material";
 import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
@@ -46,6 +47,7 @@ export function EditRegister() {
   const [pazienti, setPazienti] = useState([]);
   const [prestazioni, setPrestazioni] = useState([]);
   const [loadingAutoComplete, setLoadingAutocomplete] = useState(true);
+  const [flagAutodichiarazione, setFlagAutodichiarazione] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
 
   // Stato per il dialog di eliminazione
@@ -55,6 +57,10 @@ export function EditRegister() {
   const calculateEndTime = (startTime, duration) => {
     if (!startTime) return "";
     return moment(startTime, "HH:mm").add(duration, "minutes").format("HH:mm");
+  };
+
+  const handleChange = () => {
+    setFlagAutodichiarazione(!flagAutodichiarazione);
   };
 
   // Fetch del documento di registerTab da modificare
@@ -73,6 +79,7 @@ export function EditRegister() {
         setSelectedDate(data.giorno || getCurrentDate());
         setSelectedTime(data.ora || getCurrentTime());
         setSelectedTimeEnd(data.oraFine);
+        setFlagAutodichiarazione(data.flagAutodichiarazione || false);
         setDurata(data.durata || 30);
         setNote(data.note || "");
         setSelectedCustomerId(data.pazienteId || null);
@@ -283,6 +290,7 @@ export function EditRegister() {
   
       const selectedCustomer = pazienti.find(p => p.id === selectedCustomerId);
       dataToUpdate.pazienteId = selectedCustomerId;
+      dataToUpdate.flagAutodichiarazione = flagAutodichiarazione;
       dataToUpdate.nomeCompleto = selectedCustomer ? `${selectedCustomer.nome} ${selectedCustomer.cognome}` : "";
       dataToUpdate.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
       
@@ -482,6 +490,18 @@ export function EditRegister() {
                   rows={2}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
+                />
+              </div>
+              <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={flagAutodichiarazione}
+                      onChange={handleChange}
+                      color="primary"
+                    />
+                  }
+                  label={"Autodichiarazione"} 
                 />
               </div>
               {/* Sezione campi facoltativi */}

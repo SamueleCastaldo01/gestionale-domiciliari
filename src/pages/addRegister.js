@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import TextField from '@mui/material/TextField';
+import { Checkbox, FormControlLabel, FormControl } from "@mui/material";
 import Button from '@mui/material/Button';
 import { useSelector } from 'react-redux';
-import { FormControl, InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box, IconButton } from '@mui/material';
+import { InputLabel, MenuItem, Select, Collapse, Typography, Autocomplete, CircularProgress, Box, IconButton } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import { db } from '../firebase-config';
@@ -44,6 +45,7 @@ export function AddRegister() {
   
   // Altri campi condivisi
   const [durata, setDurata] = useState(30);
+  const [flagAutodichiarazione, setFlagAutodichiarazione] = useState(false);
   const [note, setNote] = useState("");
   const [loadingAutoComplete, setLoadingAutocomplete] = useState(true);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
@@ -54,6 +56,10 @@ export function AddRegister() {
 
   const onCustomerSelect = (id) => {
     setSelectedCustomerId(id);
+};
+
+const handleChange = () => {
+  setFlagAutodichiarazione(!flagAutodichiarazione);
 };
 
   // --- Fetch per il form "Nuovo" ---
@@ -235,6 +241,7 @@ export function AddRegister() {
     const dataToAdd = {
       uid,
       durata,
+      flagAutodichiarazione,
       giorno: selectedDate,
       ora: selectedTime,
       oraFine,
@@ -606,6 +613,18 @@ export function AddRegister() {
                     rows={2}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
+                  />
+                </div>
+                <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={flagAutodichiarazione}
+                        onChange={handleChange}
+                        color="primary"
+                      />
+                    }
+                    label={"Autodichiarazione"} 
                   />
                 </div>
 

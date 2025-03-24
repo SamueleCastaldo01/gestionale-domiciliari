@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore  } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
+import { initializeFirestore, FirestoreSettings, persistentLocalCache, persistentMultiTabManager } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -22,6 +23,17 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app)
 export const providerGoogle = new GoogleAuthProvider();
+
+
+// Set persistence (this can be done once, typically when the app starts)
+setPersistence(auth, browserLocalPersistence) // Use browserLocalPersistence to persist across tabs and reloads
+  .then(() => {
+    // Persistence is now set, you can proceed with authentication operations.
+  })
+  .catch((error) => {
+    // Handle error
+    console.error("Error setting persistence: ", error);
+  });
 
 export function signup(email, password) {
     return  createUserWithEmailAndPassword(auth, email, password);

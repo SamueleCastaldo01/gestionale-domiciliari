@@ -80,7 +80,8 @@ export function Autodichiarazione() {
         registerCollection,
         where("uid", "==", uid),
         where("giorno", ">=", lowerBound),
-        where("giorno", "<", upperBound)
+        where("giorno", "<", upperBound),
+        where("flagAutodichiarazione", "==", true)
       );
   
       const snapshot = await getDocs(q);

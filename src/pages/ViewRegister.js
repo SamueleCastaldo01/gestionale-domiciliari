@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from '../firebase-config';
 import { NavMobile } from '../components/NavMobile';
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
-import { IconButton } from '@mui/material';
+import { IconButton, Checkbox, FormControlLabel } from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -19,7 +19,6 @@ function formatDate(date) {
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
 
 // Funzione per ottenere le date della settimana corrente (da lunedì a domenica)
 function getCurrentWeekDates(referenceDate = new Date()) {
@@ -52,7 +51,7 @@ function formatDayLabel(date) {
       dayNumber: date.getDate(),
       dayName: date.toLocaleDateString('it-IT', { weekday: 'long' })
     };
-  }
+}
 
 function ViewRegister() {
   const [currentWeek, setCurrentWeek] = useState(getCurrentWeekDates());
@@ -62,7 +61,6 @@ function ViewRegister() {
   const user = useSelector((state) => state.auth.user);
   const uid = user?.uid;
   const navigate = useNavigate();
-
 
   const handleEdit = (idRegister) => {
     navigate(`/editregister?idregister=${idRegister}`)
@@ -144,6 +142,29 @@ function ViewRegister() {
     }));
   };
 
+  const handleCheckboxChange = async (id, isChecked) => {
+    try {
+      const docRef = doc(db, "registerTab", id);
+      await updateDoc(docRef, {
+        flagAutodichiarazione: isChecked
+      });
+      // Aggiorna lo stato locale per riflettere il nuovo valore
+      setAppointments((prev) => {
+        const newAppointments = { ...prev };
+        Object.keys(newAppointments).forEach(dateStr => {
+          newAppointments[dateStr] = newAppointments[dateStr].map(appointment => 
+            appointment.id === id ? { ...appointment, flagAutodichiarazione: isChecked } : appointment
+          );
+        });
+        return newAppointments;
+      });
+      console.log("Documento aggiornato con successo!");
+    } catch (error) {
+      console.error("Errore nell'aggiornamento del documento: ", error);
+    }
+  };
+  
+
   return (
     <>
       <NavMobile text="Registro Prestazioni" page="viewregister" />
@@ -192,8 +213,19 @@ function ViewRegister() {
                         <div className='mb-0'
                          style={{ listStyle: 'none', padding: '10px 15px 2px 20px', backgroundColor: "#EDEDF1" }}>
                         {dayAppointments.map((appointment, index) => (
-                            <div className="d-flex justify-content-between mb-2 align-items-center" key={index}>
-                                <p className='mb-0'><strong>{appointment.ora}</strong> - {appointment.nomeCompleto}</p>
+                            <div className="d-flex justify-content-between mb-3 align-items-center" key={index}>
+                              <div>
+                                <p className='mb-0'><strong>{appointment.ora}</strong> - {appointment.cognome} {appointment.nome}</p>
+                                <FormControlLabel
+                                  control={
+                                    <Checkbox
+                                      checked={appointment.flagAutodichiarazione || false}
+                                      onChange={(e) => handleCheckboxChange(appointment.id, e.target.checked)}
+                                    />
+                                  }
+                                  label={"Autodichiarazione"}
+                                />
+                              </div>
                                 <IconButton onClick={()=> {handleEdit(appointment.id)}}>
                                     <EditIcon/>
                                 </IconButton>
