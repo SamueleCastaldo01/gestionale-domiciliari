@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
-import useMediaQuery from "@mui/material/useMediaQuery";
 import { db } from "../firebase-config";
 import { collection, getDocs, query, where, updateDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
 import { Button, TextField } from "@mui/material";
-import DownloadIcon from "@mui/icons-material/Download";
 import { NavMobile } from "../components/NavMobile";
 import { successNoty } from "../components/Notify";
-import CircularProgress from "@mui/material/CircularProgress"; // Importa CircularProgress
+import CircularProgress from "@mui/material/CircularProgress"; 
 
 export function WorkHoursList() {
   const user = useSelector((state) => state.auth.user);
@@ -21,10 +18,9 @@ export function WorkHoursList() {
   const [loading, setLoading] = useState(false);
   const [searchMonth, setSearchMonth] = useState(() => {
     const now = new Date();
-    return now.toISOString().slice(0, 7); // "YYYY-MM"
+    return now.toISOString().slice(0, 7); 
   });
 
-  // Stato per il nome operatore, inizializzato dal localStorage (se presente)
   const [operatorName, setOperatorName] = useState(() => {
     return localStorage.getItem("operatorName") || "";
   });
