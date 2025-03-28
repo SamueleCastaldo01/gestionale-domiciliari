@@ -57,45 +57,52 @@ export function WorkHoursList() {
   const generatePDF = () => {
     const doc = new jsPDF();
     const [year, month] = searchMonth.split("-");
-  
+
     // Colonne della tabella
     const tableColumns = ["Giorno", "30 min", "45 min", "60 min", "Totale ore"];
-  
+
     let total30 = 0;
     let total45 = 0;
     let total60 = 0;
-  
+
     // Righe della tabella
     const tableRows = [];
-  
+
     const daysInMonth = new Date(year, month, 0).getDate();
     for (let day = 1; day <= daysInMonth; day++) {
       const dayKey = `${searchMonth}-${String(day).padStart(2, "0")}`;
       const dayData = workHoursData.find((item) => item.giorno === dayKey);
-  
+
       const count30 = dayData?.count30 || 0;
       const count45 = dayData?.count45 || 0;
       const count60 = dayData?.count60 || 0;
-  
+
       const totalHours = count30 * 0.5 + count45 * 0.75 + count60;
-  
+
       tableRows.push([day, count30, count45, count60, totalHours.toFixed(2)]);
-  
+
       total30 += count30;
       total45 += count45;
       total60 += count60;
     }
-  
+
     const totalHoursOverall = total30 * 0.5 + total45 * 0.75 + total60;
-  
+
     // Aggiungi una riga per i totali
     tableRows.push(["Totale", total30, total45, total60, totalHoursOverall.toFixed(2)]);
-  
+
+    // Aggiungi il titolo
+    doc.setFontSize(12); // Imposta un font non troppo grande
+    doc.text("Scheda Riepilogativa Accessi/Ore", 105, 10, { align: "center" }); // Centra il titolo
+
+    // Aggiungi uno spazio tra il titolo e la riga Nome Operatore
+    const titleSpacing = 10; // Spazio extra tra il titolo e la riga successiva
+
     // Genera la tabella con intestazione su ogni pagina
     autoTable(doc, {
       head: [tableColumns],
       body: tableRows,
-      startY: 25, // Inizia la tabella più in basso per lasciare spazio all'intestazione
+      startY: 20 + titleSpacing, // Inizia la tabella più in basso per lasciare spazio al titolo e alla riga Nome Operatore
       styles: { fontSize: 9 }, // Ridotto il fontSize
       headStyles: { fillColor: [22, 160, 133] },
       bodyStyles: { fillColor: [255, 255, 255] },
@@ -106,7 +113,7 @@ export function WorkHoursList() {
         doc.text(
           `Nome Operatore: ${operatorName} | Mese: ${month} | Anno: ${year}`,
           14, // X coordinate
-          15 // Y coordinate
+          20 // Y coordinate (spazio sotto il titolo)
         );
       },
       didDrawCell: (data) => {
@@ -117,7 +124,7 @@ export function WorkHoursList() {
         }
       },
     });
-  
+
     // Salva il PDF
     doc.save(`Ore_Lavorate_${operatorName}_${month}_${year}.pdf`);
   };
@@ -154,7 +161,7 @@ export function WorkHoursList() {
       {loading && <p>Caricamento...</p>}
       {!loading && (
         <>
-          <div className="totals-summary mb-3">
+          <div className="totals-summary">
             {(() => {
               let total30 = 0;
               let total45 = 0;
