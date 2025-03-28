@@ -20,9 +20,6 @@ export function Autodichiarazione() {
 
   const [summaryData, setSummaryData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [nfcValues, setNfcValues] = useState({});
-  const [totalNfc, setTotalNfc] = useState(0);
-  const [totalAccessi, setTotalAccessi] = useState(0);
 
   const [searchMonth, setSearchMonth] = useState(() => {
     const now = new Date();
@@ -30,7 +27,6 @@ export function Autodichiarazione() {
     return now.toISOString().slice(0, 7);
   });
   
-  // Stati per i dati dell'autodichiarazione, inizializzati da localStorage
   const [operatorName, setOperatorName] = useState(() => localStorage.getItem("nomeOperatore") || "");
   const [luogoDiNascita, setLuogoDiNascita] = useState(() => localStorage.getItem("luogoDiNascita") || "");
   const [luogoResidenza, setLuogoResidenza] = useState(() => localStorage.getItem("luogoResidenza") || "");
@@ -38,8 +34,6 @@ export function Autodichiarazione() {
   const [codiceFiscaleOperatore, setCodiceFiscaleOperatore] = useState(() => localStorage.getItem("codiceFiscaleOperatore") || "");
   const [ruoloOperatore, setRuoloOperatore] = useState(() => localStorage.getItem("ruoloOperatore") || "");
 
-
-  // Stato per il Modal
   const [openModal, setOpenModal] = useState(false);
 
   const handleOpenModal = () => setOpenModal(true);
@@ -63,7 +57,6 @@ export function Autodichiarazione() {
     try {
       const registerCollection = collection(db, "registerTab");
   
-      // Calcola il range di date in base al mese selezionato
       const lowerBound = searchMonth + "-01";
       const [year, month] = searchMonth.split("-");
       let nextYear = parseInt(year, 10);
@@ -121,12 +114,10 @@ const generatePDF = () => {
     const doc = new jsPDF();
     const [year, month] = searchMonth.split("-");
   
-    // Imposta i margini e la posizione verticale iniziale (margini ridotti)
     let yPos = 15;
     const marginLeft = 5;
     const pageWidth = doc.internal.pageSize.getWidth();
   
-    // Costruisci il testo dell'autodichiarazione utilizzando i dati dello state
     const autodichText = [
       { text: "Dichiarazione sostitutiva di certificazione", bold: true },
       { text: "(art. 46 D.P.R. Dicembre 2000 n. 445)", bold: true },
@@ -141,23 +132,18 @@ const generatePDF = () => {
       { text: "che sui pazienti di seguito indicati, alle date ed agli orari sotto riportati, non ha effettuato la registrazione degli accessi mediante il rilevatore elettronico di presenze (gong)." },
     ];
 
-  
-    // Stampa il testo dell'autodichiarazione centrato, con grassetto dove richiesto
     doc.setFontSize(7);
     autodichText.forEach((line) => {
       doc.setFont("helvetica", line.bold ? "bold" : "normal");
       const splitted = doc.splitTextToSize(line.text, pageWidth - 2 * marginLeft);
       doc.text(splitted, pageWidth / 2, yPos, { align: "center" });
-      yPos += splitted.length * 5; // Spazio ridotto tra le righe
+      yPos += splitted.length * 5;
     });
   
-    // Aggiungi meno spazio prima della tabella
     yPos += 5;
   
-    // Definisci le colonne per la tabella
     const tableColumns = ["Data", "Dalle ore", "Ora fine", "Durata", "Paziente", "DS/PS", "Motivazione"];
   
-    // Costruisci le righe della tabella dai dati (summaryData)
     const tableRows = summaryData.map((row) => {
       const formattedData = row.giorno ? row.giorno.split("-").reverse().join("-") : "";
       return [
@@ -186,17 +172,18 @@ const generatePDF = () => {
     
         const luogoText = `Luogo: ${luogoResidenza || "Luogo non inserito"}`;
         const dataText = `Data: ${new Date().toLocaleDateString()}`;
+        const firmaText = "Firma: ____________________________";
     
-        // Calcola la larghezza del testo
-        const luogoWidth = doc.getTextWidth(luogoText);
-        const dataWidth = doc.getTextWidth(dataText);
-    
-        // Definisci il margine destro
+        // Margini per il testo
+        const marginLeft = 10;
         const marginRight = 10;
     
-        // Stampa entrambi sulla destra, allineati
-        doc.text(luogoText, pageWidth - luogoWidth - marginRight, pageHeight - 8);
-        doc.text(dataText, pageWidth - dataWidth - marginRight, pageHeight - 4);
+        // Stampa data e luogo sul lato sinistro
+        doc.text(`${luogoText} - ${dataText}`, marginLeft, pageHeight - 8);
+    
+        // Stampa la firma sul lato destro
+        const firmaWidth = doc.getTextWidth(firmaText);
+        doc.text(firmaText, pageWidth - firmaWidth - marginRight, pageHeight - 8);
     }
     
     });
@@ -204,10 +191,7 @@ const generatePDF = () => {
     // Salva il file con nome dinamico
     doc.save(`${operatorName || "Operatore"}_Autodichiarazione_${month}_${year}.pdf`);
 };
-
-
-  
-  
+ 
   useEffect(() => {
     fetchSummaryData();
   }, [uid, searchMonth]);

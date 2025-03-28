@@ -207,7 +207,44 @@ const handleChange = () => {
     }
   };
   
+  const updateWorkHoursTab = async (dataToAdd) => {
+    const { uid, durata, giorno } = dataToAdd;
+    const dateObj = new Date(giorno);
+    const mese = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
+    const giornoKey = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
 
+    const workHoursDocRef = doc(db, "workHoursTab", `${uid}_${giornoKey}`);
+
+    try {
+        const docSnap = await getDoc(workHoursDocRef);
+
+        if (docSnap.exists()) {
+            // Se il documento esiste, aggiorniamo i conteggi
+            const workHoursData = docSnap.data();
+            let updateData = {};
+
+            if (durata === 30) updateData.count30 = (workHoursData.count30 || 0) + 1;
+            if (durata === 45) updateData.count45 = (workHoursData.count45 || 0) + 1;
+            if (durata === 60) updateData.count60 = (workHoursData.count60 || 0) + 1;
+
+            await updateDoc(workHoursDocRef, updateData);
+        } else {
+            // Se il documento non esiste, creiamo un nuovo documento
+            const newWorkHoursData = {
+                uid,
+                mese,
+                giorno: giornoKey,
+                count30: durata === 30 ? 1 : 0,
+                count45: durata === 45 ? 1 : 0,
+                count60: durata === 60 ? 1 : 0,
+            };
+
+            await setDoc(workHoursDocRef, newWorkHoursData);
+        }
+    } catch (error) {
+        console.error("Errore nell'aggiornare workHoursTab:", error);
+    }
+};
 
   //---------------------------------------------------------------
   const handleSubmit = async (event) => {
@@ -265,7 +302,7 @@ const handleChange = () => {
       dataToAdd.nome = selectedCustomer ? `${selectedCustomer.nome}` : "";
       dataToAdd.cognome = selectedCustomer ? `${selectedCustomer.cognome}` : "";
       dataToAdd.linkIndirizzo = selectedCustomer ? selectedCustomer.linkIndirizzo : "";
-      dataToAdd.codiceFiscale = selectedCustomer ? selectedCustomer.codiceFiscale : "";  // 👈 Aggiunto codice fiscale
+      dataToAdd.codiceFiscale = selectedCustomer ? selectedCustomer.codiceFiscale : "";
   
       const selectedPrestazione = prestazioni.find(p => p.id === selectedPrestazioniId);
       dataToAdd.prestazioniId = selectedPrestazioniId;
@@ -275,7 +312,6 @@ const handleChange = () => {
         notifyError("Seleziona un appuntamento");
         return;
       }
-  
       dataToAdd.pazienteId = selectedBooking.pazienteId;
       dataToAdd.nomeCompleto = selectedBooking.nomeCompleto;
       dataToAdd.nome = selectedBooking.nome;
@@ -289,6 +325,7 @@ const handleChange = () => {
     try {
       await addDoc(collection(db, 'registerTab'), dataToAdd);
       await updateSummaryTab(dataToAdd);
+      await updateWorkHoursTab(dataToAdd);
   
       if (selectedBooking) {
         const bookingDocRef = doc(db, 'bookingTab', selectedBooking.id);
@@ -303,8 +340,6 @@ const handleChange = () => {
     }
   };
   
-  
-
   return (
     <>
       {matches && <NavMobile text="Aggiungi al Registro" />}

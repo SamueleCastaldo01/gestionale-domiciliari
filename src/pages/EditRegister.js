@@ -167,6 +167,74 @@ export function EditRegister() {
     }
   };
   
+  //----------------------------------------------------------
+  const updateWorkHoursTabOnEdit = async (oldData, newData) => {
+    const { giorno } = newData;
+    const oldDurata = oldData.durata;
+    const newDurata = newData.durata;
+
+    const dateObj = new Date(giorno);
+    const giornoKey = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+    const workHoursDocRef = doc(db, "workHoursTab", `${uid}_${giornoKey}`);
+
+    try {
+        const docSnap = await getDoc(workHoursDocRef);
+
+        if (docSnap.exists()) {
+            const workHoursData = docSnap.data();
+
+            // Inizializza updateData con i valori esistenti
+            let updateData = {
+                count30: workHoursData.count30 || 0,
+                count45: workHoursData.count45 || 0,
+                count60: workHoursData.count60 || 0,
+            };
+
+            // Rimuovi la vecchia durata
+            if (oldDurata === 30) updateData.count30 = Math.max(updateData.count30 - 1, 0);
+            if (oldDurata === 45) updateData.count45 = Math.max(updateData.count45 - 1, 0);
+            if (oldDurata === 60) updateData.count60 = Math.max(updateData.count60 - 1, 0);
+
+            // Aggiungi la nuova durata
+            if (newDurata === 30) updateData.count30 += 1;
+            if (newDurata === 45) updateData.count45 += 1;
+            if (newDurata === 60) updateData.count60 += 1;
+
+            // Aggiorna il documento
+            await updateDoc(workHoursDocRef, updateData);
+        } else {
+            console.error("Documento workHoursTab non trovato per il giorno:", giornoKey);
+        }
+    } catch (error) {
+        console.error("Errore nell'aggiornare workHoursTab durante la modifica:", error);
+    }
+};
+  //----------------------------------------------------------
+  const updateWorkHoursTabOnDelete = async (oldData) => {
+    const { uid, giorno, durata: oldDurata } = oldData;
+
+    const dateObj = new Date(giorno);
+    const giornoKey = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    const workHoursDocRef = doc(db, "workHoursTab", `${uid}_${giornoKey}`);
+
+    try {
+        const docSnap = await getDoc(workHoursDocRef);
+
+        if (docSnap.exists()) {
+            const workHoursData = docSnap.data();
+            let updateData = {};
+
+            if (oldDurata === 30) updateData.count30 = Math.max((workHoursData.count30 || 0) - 1, 0);
+            if (oldDurata === 45) updateData.count45 = Math.max((workHoursData.count45 || 0) - 1, 0);
+            if (oldDurata === 60) updateData.count60 = Math.max((workHoursData.count60 || 0) - 1, 0);
+
+            await updateDoc(workHoursDocRef, updateData);
+        }
+    } catch (error) {
+        console.error("Errore nell'aggiornare workHoursTab durante l'eliminazione:", error);
+    }
+};
 
   //----------------------------------------------------------
   const updateSummaryTabOnEdit = async (oldData, newData) => {
@@ -299,6 +367,8 @@ export function EditRegister() {
       dataToUpdate.nomePrestazione = selectedPrestazione ? selectedPrestazione.prestazioni : "";
   
       await updateDoc(docRef, dataToUpdate);
+
+      await updateWorkHoursTabOnEdit(oldData, dataToUpdate);
   
       await updateSummaryTabOnEdit(oldData, dataToUpdate);
   
@@ -319,6 +389,7 @@ export function EditRegister() {
         return;
       }
       const oldData = docSnap.data();
+      await updateWorkHoursTabOnDelete(oldData);
       await updateSummaryTabOnDelete(oldData);
       await deleteDoc(docRef);
       successNoty("Registro eliminato con successo!");
