@@ -16,6 +16,7 @@
     "bootstrap": "^5.3.2",
     "cloudinary-react": "^1.8.1",
     "codice-fiscale-js": "^2.3.22",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "firebase": "^10.4.0",
     "framer-motion": "^10.16.4",

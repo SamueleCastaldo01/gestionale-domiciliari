@@ -107,7 +107,7 @@ export function AddCliente() {
                 codiceFiscale,
                 telefono,
                 email,
-                dataCreazione: Timestamp.fromDate(new Date()), // Aggiungi la data di creazione
+                dataCreazione: Timestamp.fromDate(new Date()),
             });
             handleReset();
             navigate("/customerlist");
