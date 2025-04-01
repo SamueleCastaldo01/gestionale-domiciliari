@@ -33,32 +33,20 @@ export function CustomerList() {
   const [searchCognome, setSearchCognome] = useState(''); 
   const [searchCf, setSearchCf] = useState(''); 
   const [searchType, setSearhType] = useState('nome'); 
+  const [searchQuery, setSearchQuery] = useState(""); // Stato per la ricerca
 
   const handleEdit = (customerId) => {
     setEditCustomerId(customerId);
     setEditOpen(true);
   };
 
-  const fetchCustomers = async (searchType) => {
+  const fetchCustomers = async () => {
     try {
       setLoading(true); // Inizia il caricamento
       const customerCollection = collection(db, "customersTab");
   
-      let customerQuery;
-      if (searchPhone && searchType == "phone") {
-        // Filtro per numero di telefono
-        customerQuery = query(customerCollection,where("uid", "==", uid), where("telefono", "==", searchPhone));
-      } else if(searchNome && searchType == "nome") {
-        customerQuery = query(customerCollection,where("uid", "==", uid), where("nome", "==", searchNome));
-      } else if(searchCognome && searchType == "cognome") {
-        customerQuery = query(customerCollection, where("uid", "==", uid), where("cognome", "==", searchCognome));
-      } else if(searchCf && searchType == "cf") {
-        customerQuery = query(customerCollection, where("uid", "==", uid), where("codiceFiscale", "==", searchCf));
-      }
-      else {
-        // Crea una query per ordinare per dataCreazione in ordine decrescente se non c'è il filtro
-        customerQuery = query(customerCollection,where("uid", "==", uid), orderBy("cognome", "asc"));
-      }
+      // Query per recuperare tutti i clienti per uid, ordinati per cognome
+      const customerQuery = query(customerCollection, where("uid", "==", uid), orderBy("cognome", "asc"));
   
       const customerSnapshot = await getDocs(customerQuery);
       const customerList = customerSnapshot.docs.map((doc) => ({
@@ -162,6 +150,16 @@ export function CustomerList() {
     { field: "email", headerName: "Email", width: 130 },
   ];
 
+  const filteredCustomers = customers.filter((customer) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      customer.telefono?.toLowerCase().includes(query) ||
+      customer.nome?.toLowerCase().includes(query) ||
+      customer.cognome?.toLowerCase().includes(query) ||
+      customer.codiceFiscale?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <>
     {matches && <NavMobile text= "I miei pazienti" page= "customerlist"/>}
@@ -171,102 +169,13 @@ export function CustomerList() {
       {matches &&
       <>
       <div className='ricerca'>
-      <div className='d-flex align-items-center gap-2 mb-3'>
-              <p className='mb-0'><strong>Cerca per:</strong></p>
-              <p className={`pSearch ${searchType === "nome" ? "active" : ""}`}  onClick={() => {setSearhType("nome")}}>Nome</p> 
-              <p className={`pSearch ${searchType === "cognome" ? "active" : ""}`} onClick={() => {setSearhType("cognome")}}>Cognome</p>
-              <p className={`pSearch ${searchType === "telefono" ? "active" : ""}`} onClick={() => {setSearhType("telefono")}}>Telefono</p>
-              <p className={`pSearch ${searchType === "cf" ? "active" : ""}`} onClick={() => {setSearhType("cf")}}>CF</p>
-        </div>
-        {searchType == "telefono" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearch}>
-            <TextField
-              style={{width: "75%"}}
-              label="Cerca per Telefono"
+        <TextField
+              style={{ width: "100%", marginBottom: "1rem" }}
+              label="Cerca per Nome, Cognome, Telefono o Codice Fiscale"
               variant="outlined"
-              className="me-2"
-              value={searchPhone}
-              onChange={(e) => setSearchPhone(e.target.value)} // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
-          {searchType == "nome" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearchNome}>
-            <TextField
-              style={{width: "75%"}}
-              label="Cerca per Nome"
-              variant="outlined"
-              className="me-2"
-              value={searchNome}
-              onChange={(e) => {
-                const formattedName = capitalizeWords(e.target.value); // Capitalizza il valore inserito
-                setSearchNome(formattedName); // Aggiorna lo stato con il valore formattato
-              }}  // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
-          {searchType == "cognome" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearchCognome}>
-            <TextField
-              style={{width: "75%"}}
-              label="Cerca per Cognome"
-              variant="outlined"
-              className="me-2"
-              value={searchCognome}
-              onChange={(e) => {
-                const formattedCognome = capitalizeWords(e.target.value); // Capitalizza il valore inserito
-                setSearchCognome(formattedCognome); // Aggiorna lo stato con il valore formattato
-              }}  // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
-        {searchType == "cf" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearchCf}>
-            <TextField
-              style={{width: "75%"}}
-              label="Cerca per Codice Fiscale"
-              variant="outlined"
-              className="me-2"
-              value={searchCf}
-              onChange={(e) => {
-                const formattedName = toUpperCaseWords(e.target.value);
-                setSearchCf(formattedName);
-              }} 
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+        />
       </div>
 
         <div
@@ -276,7 +185,7 @@ export function CustomerList() {
             overflowY: "auto" // Abilita lo scroll solo verticalmente
           }}
         >
-        {customers.map((customer) => (
+        {filteredCustomers.map((customer) => (
               <div 
               key={customer.id} 
               className="customer d-flex align-items-center justify-content-between py-3"
@@ -301,101 +210,13 @@ export function CustomerList() {
         <h2 className='titlePage'>Anagrafica Pazienti</h2>
         <div className='d-flex justify-content-between align-items-center mt-4'>
           <div className='d-flex flex-column  gap-2'>
-            <div className='d-flex align-items-center gap-2'>
-              <p className='mb-0'><strong>Ricerca per:</strong></p>
-              <p className={`pSearch ${searchType === "nome" ? "active" : ""}`}  onClick={() => {setSearhType("nome")}}>Nome</p> 
-              <p className={`pSearch ${searchType === "cognome" ? "active" : ""}`} onClick={() => {setSearhType("cognome")}}>Cognome</p>
-              <p className={`pSearch ${searchType === "telefono" ? "active" : ""}`} onClick={() => {setSearhType("telefono")}}>Telefono</p>
-            </div>
-          {searchType == "telefono" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearch}>
-            <TextField
-              style={{width: "180px"}}
-              label="Cerca per Telefono"
-              variant="outlined"
-              className="me-2"
-              value={searchPhone}
-              onChange={(e) => setSearchPhone(e.target.value)} // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
-          {searchType == "nome" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearchNome}>
-            <TextField
-              style={{width: "180px"}}
-              label="Cerca per Nome"
-              variant="outlined"
-              className="me-2"
-              value={searchNome}
-              onChange={(e) => {
-                const formattedName = capitalizeWords(e.target.value); // Capitalizza il valore inserito
-                setSearchNome(formattedName); // Aggiorna lo stato con il valore formattato
-              }}  // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
-          {searchType == "cognome" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearchCognome}>
-            <TextField
-              style={{width: "180px"}}
-              label="Cerca per Cognome"
-              variant="outlined"
-              className="me-2"
-              value={searchCognome}
-              onChange={(e) => {
-                const formattedCognome = capitalizeWords(e.target.value); // Capitalizza il valore inserito
-                setSearchCognome(formattedCognome); // Aggiorna lo stato con il valore formattato
-              }}  // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
-          {searchType == "cf" &&
-          <form className="d-flex align-items-center" onSubmit={handleSearchCf}>
-            <TextField
-              style={{width: "180px"}}
-              label="Cerca per Codice Fiscale"
-              variant="outlined"
-              className="me-2"
-              value={searchCf}
-              onChange={(e) => {
-                const formattedCognome = toUpperCaseWords(e.target.value); // Capitalizza il valore inserito
-                setSearchCf(formattedCognome); // Aggiorna lo stato con il valore formattato
-              }}  // Aggiorna lo stato con il valore inserito
-            />
-            <Button
-              className="me-2"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Cerca
-            </Button>
-          </form>
-          }
+          <TextField
+            style={{ width: "100%", marginBottom: "1rem" }}
+            label="Cerca per Nome, Cognome, Telefono o Codice Fiscale"
+            variant="outlined"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)} // Aggiorna lo stato con il valore inserito
+          />
           </div>
           <div>
             <IconButton variant="contained" onClick={() => {fetchCustomers(""); handleResetSearch()}}>

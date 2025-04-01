@@ -64,7 +64,7 @@ export function AddBooking() {
         try {
             setLoadingAutocomplete(true);
             const customerCollection = collection(db, "customersTab");
-            const customerQuery = query(customerCollection, where("uid", "==", uid), orderBy("nome", "asc"));
+            const customerQuery = query(customerCollection, where("uid", "==", uid), orderBy("cognome", "asc"));
             const customerSnapshot = await getDocs(customerQuery);
             const customerList = customerSnapshot.docs.map((doc) => ({
                 id: doc.id,
@@ -266,7 +266,11 @@ export function AddBooking() {
                                 options={pazienti}
                                 value={pazienti.find(option => option.id === selectedCustomerId) || null}
                                 loading={loadingAutoComplete}
-                                getOptionLabel={(option) => `${option.nome} ${option.cognome}`}
+                                getOptionLabel={(option) => {
+                                    const cognome = option.cognome || "";
+                                    const nome = option.nome || "";
+                                    return `${cognome} ${nome}`.trim();
+                                }}
                                 renderOption={(props, option) => {
                                     let isExpired = false;
                                     if (!option.dataFinePai) {
@@ -286,7 +290,7 @@ export function AddBooking() {
                                     <li {...props} key={option.id}>
                                         <Box>
                                         <Typography variant="body1" sx={{ color: isExpired ? 'red' : 'inherit' }}>
-                                            {option.nome} {option.cognome}
+                                            {option.cognome} {option.nome}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
                                             {option.codiceFiscale}
@@ -317,43 +321,23 @@ export function AddBooking() {
                                     setIsPaiExpired(expired);
                                     }
                                 }}
-                                renderInput={(params) => {
-                                    const selectedOption = pazienti.find(option => option.id === selectedCustomerId);
-                                    let isExpired = false;
-                                    if (selectedOption) {
-                                    if (!selectedOption.dataFinePai) {
-                                        isExpired = true;
-                                    } else {
-                                        const parts = selectedOption.dataFinePai.split("-");
-                                        if (parts.length === 3) {
-                                        const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
-                                        const compareDate = new Date(selectedDate);
-                                        if (parsedDate < compareDate) {
-                                            isExpired = true;
-                                        }
-                                        }
-                                    }
-                                    }
-
-                                    return (
+                                renderInput={(params) => (
                                     <TextField
-                                        {...params}
-                                        label="Seleziona paziente"
-                                        variant="outlined"
-                                        fullWidth
-                                        InputProps={{
+                                    {...params}
+                                    label="Seleziona paziente"
+                                    variant="outlined"
+                                    fullWidth
+                                    InputProps={{
                                         ...params.InputProps,
-                                        style: { color: isExpired ? 'red' : 'inherit' },
                                         endAdornment: (
-                                            <>
+                                        <>
                                             {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
                                             {params.InputProps.endAdornment}
-                                            </>
+                                        </>
                                         ),
-                                        }}
+                                    }}
                                     />
-                                    );
-                                }}
+                                )}
                                 />
                               <div className='mt-2'>
                                 {selectedCustomerId && selectedPaiDate !== "N/A" && (

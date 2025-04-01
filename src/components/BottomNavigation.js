@@ -117,10 +117,10 @@ return (
     component={Link}
     className="linq"
     value="Sched"
-    to="/assessmentList"
-    label="Riepilogo"
+    to="/documents"
+    label="Documenti"
     icon={<AssessmentIcon />}
-    data-selected={location.pathname === '/assessmentList' || location.pathname === '/autodichiarazione' }
+    data-selected={location.pathname === '/documents' || location.pathname === '/autodichiarazione' || location.pathname === '/assessmentList' || location.pathname === '/workhours' }
   />
 )}
 </BottomNavigation>

@@ -67,7 +67,7 @@ const handleChange = () => {
     try {
       setLoadingAutocomplete(true);
       const customerCollection = collection(db, "customersTab");
-      const customerQuery = query(customerCollection, where("uid", "==", uid), orderBy("nome", "asc"));
+      const customerQuery = query(customerCollection, where("uid", "==", uid), orderBy("cognome", "asc"));
       const customerSnapshot = await getDocs(customerQuery);
       const customerList = customerSnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -422,95 +422,79 @@ const handleChange = () => {
                         options={pazienti}
                         value={pazienti.find(option => option.id === selectedCustomerId) || null}
                         loading={loadingAutoComplete}
-                        getOptionLabel={(option) => `${option.nome} ${option.cognome}`}
+                        getOptionLabel={(option) => {
+                          const cognome = option.cognome || "";
+                          const nome = option.nome || "";
+                          return `${cognome} ${nome}`.trim(); // Mostra prima il cognome e poi il nome
+                        }}
                         renderOption={(props, option) => {
-                            let isExpired = false;
-                            if (!option.dataFinePai) {
+                          let isExpired = false;
+                          if (!option.dataFinePai) {
                             isExpired = true;
-                            } else {
+                          } else {
                             const parts = option.dataFinePai.split("-");
                             if (parts.length === 3) {
-                                const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
-                                const compareDate = new Date(selectedDate);
-                                if (parsedDate < compareDate) {
+                              const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                              const compareDate = new Date(selectedDate);
+                              if (parsedDate < compareDate) {
                                 isExpired = true;
-                                }
+                              }
                             }
-                            }
-
-                            return (
+                          }
+              
+                          return (
                             <li {...props} key={option.id}>
-                                <Box>
+                              <Box>
                                 <Typography variant="body1" sx={{ color: isExpired ? 'red' : 'inherit' }}>
-                                    {option.nome} {option.cognome}
+                                  {option.cognome} {option.nome} {/* Cognome prima del nome */}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    {option.codiceFiscale}
+                                  {option.codiceFiscale}
                                 </Typography>
-                                </Box>
+                              </Box>
                             </li>
-                            );
+                          );
                         }}
                         onChange={(event, value) => {
-                            if (value) {
+                          if (value) {
                             onCustomerSelect(value.id);
                             setSelectedPaiDate(value.dataFinePai || "N/A");
-
+              
                             // Controllo se il Pai è scaduto
                             let expired = false;
                             if (!value.dataFinePai) {
-                                expired = true;
+                              expired = true;
                             } else {
-                                const parts = value.dataFinePai.split("-");
-                                if (parts.length === 3) {
+                              const parts = value.dataFinePai.split("-");
+                              if (parts.length === 3) {
                                 const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
                                 const compareDate = new Date(selectedDate);
                                 if (parsedDate < compareDate) {
-                                    expired = true;
+                                  expired = true;
                                 }
-                                }
+                              }
                             }
                             setIsPaiExpired(expired);
-                            }
+                          }
                         }}
-                        renderInput={(params) => {
-                            const selectedOption = pazienti.find(option => option.id === selectedCustomerId);
-                            let isExpired = false;
-                            if (selectedOption) {
-                            if (!selectedOption.dataFinePai) {
-                                isExpired = true;
-                            } else {
-                                const parts = selectedOption.dataFinePai.split("-");
-                                if (parts.length === 3) {
-                                const parsedDate = new Date(parts[2], parts[1] - 1, parts[0]);
-                                const compareDate = new Date(selectedDate);
-                                if (parsedDate < compareDate) {
-                                    isExpired = true;
-                                }
-                                }
-                            }
-                            }
-
-                            return (
-                            <TextField
-                                {...params}
-                                label="Seleziona paziente"
-                                variant="outlined"
-                                fullWidth
-                                InputProps={{
-                                ...params.InputProps,
-                                style: { color: isExpired ? 'red' : 'inherit' },
-                                endAdornment: (
-                                    <>
-                                    {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                    </>
-                                ),
-                                }}
-                            />
-                            );
-                        }}
-                        />
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Seleziona paziente"
+                            variant="outlined"
+                            fullWidth
+                            InputProps={{
+                              ...params.InputProps,
+                              endAdornment: (
+                                <>
+                                  {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
+                                  {params.InputProps.endAdornment}
+                                </>
+                              ),
+                            }}
+                          />
+                        )}
+                      />
                         <div className='mt-2'>
                           {selectedCustomerId && selectedPaiDate !== "N/A" && (
                             isPaiExpired ? 
