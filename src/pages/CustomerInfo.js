@@ -33,6 +33,7 @@ export function CustomerInfo() {
     const [dataNascita, setDataNascita] = useState('');
     const [codiceFiscale, setCodiceFiscale] = useState('');
     const [telefono, setTelefono] = useState('');
+    const [dsPs, setDsPs] = useState('');
     const [email, setEmail] = useState('');
     const [showOptionalFields, setShowOptionalFields] = useState(false);
     const [customerUid, setCustomerUid] = useState('');
@@ -56,7 +57,6 @@ export function CustomerInfo() {
             if (docSnap.exists()) {
                 const customer = docSnap.data();
                 setCustomerUid(customer.uid);
-                // Verifica se l'utente loggato è lo stesso del paziente
                 if (customer.uid !== uid) {
                     notifyErrorAddCliente("Non hai i permessi per modificare questo paziente.");
                     navigate("/customerlist");
@@ -71,8 +71,8 @@ export function CustomerInfo() {
                     setCodiceFiscale(customer.codiceFiscale);
                     setTelefono(customer.telefono);
                     setEmail(customer.email);
-                    // Inizializza i contatti aggiuntivi se esistono, altrimenti array vuoto
                     setAdditionalContacts(customer.additionalContacts || []);
+                    setDsPs(customer.dsPs || ''); // Recupera il valore di dsPs
                 }
             } else {
                 console.log("Cliente non trovato!");
@@ -155,6 +155,7 @@ export function CustomerInfo() {
                 telefono,
                 email,
                 additionalContacts, // Invia anche i contatti aggiuntivi
+                dsPs: parseInt(dsPs, 10) || 0, // Salva il valore come numero intero
             });
             handleReset();
             navigate("/customerlist");
@@ -274,6 +275,20 @@ export function CustomerInfo() {
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </div>
+                                <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                                <TextField
+                                    className='w-100'
+                                    type='number'
+                                    label="DS/PS"
+                                    variant="outlined"
+                                    color='primary'
+                                    value={dsPs}
+                                    onChange={(e) => setDsPs(e.target.value)}
+                                    InputProps={{
+                                        inputProps: { min: 0 },
+                                    }}
+                                />
+                            </div>
 
                                 {/* Sezione per contatti aggiuntivi */}
                                 <div className="mt-4 col-lg-12">

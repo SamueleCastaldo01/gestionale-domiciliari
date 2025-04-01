@@ -97,18 +97,27 @@ export function Autodichiarazione() {
         };
       });
   
-      // Ordinamento: prima per cognome, poi per giorno, infine per ora
+      // Ordinamento: prima per cognome, poi per nome, poi per giorno, infine per ora
       fetchedData.sort((a, b) => {
+        // Ordina per cognome
         const cognomeA = (a.cognome || "").toLowerCase();
         const cognomeB = (b.cognome || "").toLowerCase();
         const compareCognome = cognomeA.localeCompare(cognomeB);
         if (compareCognome !== 0) return compareCognome;
-  
+      
+        // Ordina per nome
+        const nomeA = (a.nome || "").toLowerCase();
+        const nomeB = (b.nome || "").toLowerCase();
+        const compareNome = nomeA.localeCompare(nomeB);
+        if (compareNome !== 0) return compareNome;
+      
+        // Ordina per giorno
         const giornoA = a.giorno || "";
         const giornoB = b.giorno || "";
         const compareGiorno = giornoA.localeCompare(giornoB);
         if (compareGiorno !== 0) return compareGiorno;
-  
+      
+        // Ordina per ora
         const oraA = a.ora || "";
         const oraB = b.ora || "";
         return oraA.localeCompare(oraB);
