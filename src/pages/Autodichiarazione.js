@@ -56,6 +56,7 @@ export function Autodichiarazione() {
   
     try {
       const registerCollection = collection(db, "registerTab");
+      const customerCollection = collection(db, "customersTab");
   
       const lowerBound = searchMonth + "-01";
       const [year, month] = searchMonth.split("-");
@@ -68,19 +69,35 @@ export function Autodichiarazione() {
       const nextMonthStr = nextMonth < 10 ? `0${nextMonth}` : `${nextMonth}`;
       const upperBound = `${nextYear}-${nextMonthStr}-01`;
   
-      // Query: filtra per uid e per il campo "giorno" compreso nel range
-      const q = query(
+      // Query per recuperare i dati da registerTab
+      const registerQuery = query(
         registerCollection,
         where("uid", "==", uid),
         where("giorno", ">=", lowerBound),
         where("giorno", "<", upperBound),
         where("flagAutodichiarazione", "==", true)
       );
+      const registerSnapshot = await getDocs(registerQuery);
+      let fetchedData = registerSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   
-      const snapshot = await getDocs(q);
-      let fetchedData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      // Recupera tutti i pazienti da customersTab
+      const customerSnapshot = await getDocs(query(customerCollection, where("uid", "==", uid)));
+      const customerMap = {};
+      customerSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        customerMap[doc.id] = data; // Mappa pazienteId -> dati del paziente
+      });
   
-      // Ordinamento: prima per cognome, poi per ora (assumendo ora in formato "HH:mm")
+      // Associa il valore di dsPs ai dati di registerTab
+      fetchedData = fetchedData.map((item) => {
+        const customerData = customerMap[item.pazienteId] || {};
+        return {
+          ...item,
+          dsPs: customerData.dsPs || "", // Aggiungi dsPs se presente
+        };
+      });
+  
+      // Ordinamento: prima per cognome, poi per ora
       fetchedData.sort((a, b) => {
         const cognomeA = (a.cognome || "").toLowerCase();
         const cognomeB = (b.cognome || "").toLowerCase();
@@ -111,85 +128,79 @@ export function Autodichiarazione() {
 
 
 const generatePDF = () => {
-    const doc = new jsPDF();
-    const [year, month] = searchMonth.split("-");
-  
-    let yPos = 15;
-    const marginLeft = 5;
-    const pageWidth = doc.internal.pageSize.getWidth();
-  
-    const autodichText = [
-      { text: "Dichiarazione sostitutiva di certificazione", bold: true },
-      { text: "(art. 46 D.P.R. Dicembre 2000 n. 445)", bold: true },
-      { text: "" },
-      { 
-        text: `Il/La sottoscritto/a ${operatorName || "Simone Savignano"}, nato/a a ${luogoDiNascita || "Ariano Irpino"} il ${dataDiNascita || "23/02/1992"}, Codice fiscale ${codiceFiscaleOperatore || "SVGSMN92B23A399K"}, in qualità di: ${ruoloOperatore} ` 
-      },
-      { 
-        text: "consapevole che chiunque rilascia dichiarazioni mendaci è punito ai sensi del codice penale e delle leggi speciali in materia, ai sensi e per gli effetti dell'art. 46 D.P.R. n. 445/2000" 
-      },
-      { text: "dichiara", bold: true },
-      { text: "che sui pazienti di seguito indicati, alle date ed agli orari sotto riportati, non ha effettuato la registrazione degli accessi mediante il rilevatore elettronico di presenze (gong)." },
-    ];
+  const doc = new jsPDF();
+  const [year, month] = searchMonth.split("-");
 
-    doc.setFontSize(7);
-    autodichText.forEach((line) => {
-      doc.setFont("helvetica", line.bold ? "bold" : "normal");
-      const splitted = doc.splitTextToSize(line.text, pageWidth - 2 * marginLeft);
-      doc.text(splitted, pageWidth / 2, yPos, { align: "center" });
-      yPos += splitted.length * 5;
-    });
-  
-    yPos += 5;
-  
-    const tableColumns = ["Data", "Dalle ore", "Ora fine", "Durata", "Paziente", "DS/PS", "Motivazione"];
-  
-    const tableRows = summaryData.map((row) => {
-      const formattedData = row.giorno ? row.giorno.split("-").reverse().join("-") : "";
-      return [
-        formattedData,
-        row.ora || "",
-        row.oraFine || "",
-        row.durata || "",
-        `${row.cognome || ""} ${row.nome || ""}`.trim(),
-        "", // DS/PS vuoto
-        "apparente funzionamento del gong"
-      ];
-    });
-  
-    // Aggiungi la tabella con autoTable, includendo il piè di pagina
-    autoTable(doc, {
-      head: [tableColumns],
-      body: tableRows,
-      startY: yPos,
-      styles: { fontSize: 9 }, // Testo più piccolo nella tabella
-      headStyles: { fillColor: [22, 160, 133] },
-      margin: { left: marginLeft, right: marginLeft }, // Riduci i margini
-      didDrawPage: function (data) {
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        doc.setFontSize(8);
-    
-        const luogoText = `Luogo: ${luogoResidenza || "Luogo non inserito"}`;
-        const dataText = `Data: ${new Date().toLocaleDateString()}`;
-        const firmaText = "Firma: ____________________________";
-    
-        // Margini per il testo
-        const marginLeft = 10;
-        const marginRight = 10;
-    
-        // Stampa data e luogo sul lato sinistro
-        doc.text(`${luogoText} - ${dataText}`, marginLeft, pageHeight - 8);
-    
-        // Stampa la firma sul lato destro
-        const firmaWidth = doc.getTextWidth(firmaText);
-        doc.text(firmaText, pageWidth - firmaWidth - marginRight, pageHeight - 8);
+  let yPos = 15;
+  const marginLeft = 5;
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const autodichText = [
+    { text: "Dichiarazione sostitutiva di certificazione", bold: true },
+    { text: "(art. 46 D.P.R. Dicembre 2000 n. 445)", bold: true },
+    { text: "" },
+    {
+      text: `Il/La sottoscritto/a ${operatorName || "Simone Savignano"}, nato/a a ${luogoDiNascita || "Ariano Irpino"} il ${dataDiNascita || "23/02/1992"}, Codice fiscale ${codiceFiscaleOperatore || "SVGSMN92B23A399K"}, in qualità di: ${ruoloOperatore} `
+    },
+    {
+      text: "consapevole che chiunque rilascia dichiarazioni mendaci è punito ai sensi del codice penale e delle leggi speciali in materia, ai sensi e per gli effetti dell'art. 46 D.P.R. n. 445/2000"
+    },
+    { text: "dichiara", bold: true },
+    { text: "che sui pazienti di seguito indicati, alle date ed agli orari sotto riportati, non ha effettuato la registrazione degli accessi mediante il rilevatore elettronico di presenze (gong)." },
+  ];
+
+  doc.setFontSize(7);
+  autodichText.forEach((line) => {
+    doc.setFont("helvetica", line.bold ? "bold" : "normal");
+    const splitted = doc.splitTextToSize(line.text, pageWidth - 2 * marginLeft);
+    doc.text(splitted, pageWidth / 2, yPos, { align: "center" });
+    yPos += splitted.length * 5;
+  });
+
+  yPos += 5;
+
+  const tableColumns = ["Data", "Dalle ore", "Ora fine", "Durata", "Paziente", "DS/PS", "Motivazione"];
+
+  const tableRows = summaryData.map((row) => {
+    const formattedData = row.giorno ? row.giorno.split("-").reverse().join("-") : "";
+    return [
+      formattedData,
+      row.ora || "",
+      row.oraFine || "",
+      row.durata || "",
+      `${row.cognome || ""} ${row.nome || ""}`.trim(),
+      row.dsPs || "", // Aggiungi dsPs se presente
+      "apparente funzionamento del gong"
+    ];
+  });
+
+  autoTable(doc, {
+    head: [tableColumns],
+    body: tableRows,
+    startY: yPos,
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [22, 160, 133] },
+    margin: { left: marginLeft, right: marginLeft },
+    didDrawPage: function (data) {
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.setFontSize(8);
+
+      const luogoText = `Luogo: ${luogoResidenza || "Luogo non inserito"}`;
+      const dataText = `Data: ${new Date().toLocaleDateString()}`;
+      const firmaText = "Firma: ____________________________";
+
+      const marginLeft = 10;
+      const marginRight = 10;
+
+      doc.text(`${luogoText} - ${dataText}`, marginLeft, pageHeight - 8);
+
+      const firmaWidth = doc.getTextWidth(firmaText);
+      doc.text(firmaText, pageWidth - firmaWidth - marginRight, pageHeight - 8);
     }
-    
-    });
-  
-    // Salva il file con nome dinamico
-    doc.save(`${operatorName || "Operatore"}_Autodichiarazione_${month}_${year}.pdf`);
+  });
+
+  doc.save(`${operatorName || "Operatore"}_Autodichiarazione_${month}_${year}.pdf`);
 };
  
   useEffect(() => {

@@ -32,7 +32,8 @@ export function AddCliente() {
     const [codiceFiscale, setCodiceFiscale] = useState('');
     const [telefono, setTelefono] = useState('');
     const [email, setEmail] = useState('');
-    const [showOptionalFields, setShowOptionalFields] = useState(false); // State for optional fields
+    const [showOptionalFields, setShowOptionalFields] = useState(false);
+    const [dsPs, setDsPs] = useState("");
 
     const handleGenderChange = (event) => {
         setGender(event.target.value);
@@ -49,7 +50,6 @@ export function AddCliente() {
         setLinkIndirizzo("");
     };
 
-      // Funzione per incollare dagli appunti
         const handlePasteClick = async () => {
             try {
             const text = await navigator.clipboard.readText();
@@ -107,6 +107,7 @@ export function AddCliente() {
                 codiceFiscale,
                 telefono,
                 email,
+                dsPs: parseInt(dsPs, 10),
                 dataCreazione: Timestamp.fromDate(new Date()),
             });
             handleReset();
@@ -165,6 +166,17 @@ export function AddCliente() {
                         </div>
                         <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
                             <TextField required className='w-100' type='date' label="Fine Pai" variant="outlined" color='primary' value={dataFinePai} onChange={(e) => setDataFinePai(e.target.value)} InputLabelProps={{ shrink: true }} />
+                        </div>
+                        <div className='mt-4 col-lg-4 col-md-6 col-sm-12'>
+                            <TextField
+                                className='w-100'
+                                type='number'
+                                label="DS/PS"
+                                variant="outlined"
+                                color='primary'
+                                value={dsPs}
+                                onChange={(e) => setDsPs(e.target.value)}
+                            />
                         </div>
 
                         {/* Optional Fields Section */}
