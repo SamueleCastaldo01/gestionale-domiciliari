@@ -185,22 +185,63 @@ export function CustomerList() {
             overflowY: "auto" // Abilita lo scroll solo verticalmente
           }}
         >
-        {filteredCustomers.map((customer) => (
-              <div 
-              key={customer.id} 
-              className="customer d-flex align-items-center justify-content-between py-3"
-              onClick={() => { navigate(`/customerinfo?id=${customer.id}`); }}
+        {filteredCustomers.map((customer) => {
+    // Controlla se la Pai è scaduta
+    let isPaiExpired = false;
+    if (customer.dataFinePai) {
+      const [day, month, year] = customer.dataFinePai.split("-");
+      const finePaiDate = new Date(year, month - 1, day); // Converte in oggetto Date
+      const today = new Date();
+      isPaiExpired = finePaiDate < today; // Verifica se la Pai è scaduta
+    }
+
+    return (
+      <div
+        key={customer.id}
+        className="customer d-flex align-items-center justify-content-between py-3"
+        onClick={() => {
+          navigate(`/customerinfo?id=${customer.id}`);
+        }}
+      >
+        <div>
+          {/* Nome del cliente, in rosso se la Pai è scaduta */}
+          <h5
+            style={{
+              fontSize: "17px",
+              fontWeight: "400",
+              color: isPaiExpired ? "red" : "inherit", // Cambia colore se Pai è scaduta
+            }}
+            className="mb-1"
+          >
+            {customer.cognome} {customer.nome}
+          </h5>
+
+          {/* Telefono */}
+          {customer.telefono && (
+            <p className="mb-0" style={{ color: "gray", fontSize: "14px" }}>
+              Tel: {customer.telefono}
+            </p>
+          )}
+
+          {/* Fine Pai */}
+          {customer.dataFinePai && (
+            <p
+              className="mb-0"
+              style={{
+                color: isPaiExpired ? "red" : "gray", // Cambia colore se Pai è scaduta
+                fontSize: "14px",
+              }}
             >
-            <div>
-              <h5 style={{fontSize: "17px", fontWeight: "400"}} className='mb-1'>{customer.cognome} {customer.nome}</h5>
-              {customer.telefono && <p className='mb-0' style={{color: "gray", fontSize: "14px"}}>Tel: {customer.telefono}</p>}
-            </div>
-            <div>
-            <ArrowForwardIosIcon/>
-            </div>
-            
-          </div>
-        ))}
+              Scadenza Pai: {customer.dataFinePai}
+            </p>
+          )}
+        </div>
+        <div>
+          <ArrowForwardIosIcon />
+        </div>
+      </div>
+    );
+  })}
       </div>
       </>}
 

@@ -97,13 +97,21 @@ export function Autodichiarazione() {
         };
       });
   
-      // Ordinamento: prima per cognome, poi per ora
+      // Ordinamento: prima per cognome, poi per giorno, infine per ora
       fetchedData.sort((a, b) => {
         const cognomeA = (a.cognome || "").toLowerCase();
         const cognomeB = (b.cognome || "").toLowerCase();
         const compareCognome = cognomeA.localeCompare(cognomeB);
         if (compareCognome !== 0) return compareCognome;
-        return (a.ora || "").localeCompare(b.ora || "");
+  
+        const giornoA = a.giorno || "";
+        const giornoB = b.giorno || "";
+        const compareGiorno = giornoA.localeCompare(giornoB);
+        if (compareGiorno !== 0) return compareGiorno;
+  
+        const oraA = a.ora || "";
+        const oraB = b.ora || "";
+        return oraA.localeCompare(oraB);
       });
   
       setSummaryData(fetchedData);
@@ -163,12 +171,15 @@ const generatePDF = () => {
 
   const tableRows = summaryData.map((row) => {
     const formattedData = row.giorno ? row.giorno.split("-").reverse().join("-") : "";
+    const paziente = `${row.cognome || ""} ${row.nome || ""}\n`; // Nome e cognome
+    const codiceFiscale = `(${row.codiceFiscale || ""})`; // Codice fiscale con parentesi
+
     return [
       formattedData,
       row.ora || "",
       row.oraFine || "",
       row.durata || "",
-      `${row.cognome || ""} ${row.nome || ""}`.trim(),
+      { text: paziente + codiceFiscale, fontSize: 8 }, // Nome con codice fiscale più piccolo
       row.dsPs || "", // Aggiungi dsPs se presente
       "apparente funzionamento del gong"
     ];
@@ -176,10 +187,20 @@ const generatePDF = () => {
 
   autoTable(doc, {
     head: [tableColumns],
-    body: tableRows,
+    body: tableRows.map((row) => {
+      row[4] = {
+        content: row[4].text,
+        styles: { fontSize: row[4].fontSize }, 
+      };
+      return row;
+    }),
     startY: yPos,
     styles: { fontSize: 9 },
     headStyles: { fillColor: [22, 160, 133] },
+    bodyStyles: { cellPadding: 2 },
+    columnStyles: {
+      4: { cellWidth: 50 }, // Colonna "Paziente" più larga per includere nome e codice fiscale
+    },
     margin: { left: marginLeft, right: marginLeft },
     didDrawPage: function (data) {
       const pageHeight = doc.internal.pageSize.getHeight();
