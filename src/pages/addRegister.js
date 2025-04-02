@@ -53,6 +53,7 @@ export function AddRegister() {
   // Stato per la modalità: null (ancora da scegliere), "nuovo" oppure "appuntamento"
   const [mode, setMode] = useState(null);
   const navigate = useNavigate();
+  const [oraFine, setOraFine] = useState("");
 
   const onCustomerSelect = (id) => {
     setSelectedCustomerId(id);
@@ -134,8 +135,13 @@ const handleChange = () => {
   }, [mode]);
 
   const handledurataChange = (event) => {
-    setDurata(event.target.value);
+    const newDurata = event.target.value;
+    setDurata(newDurata);
+  
+    // Aggiorna l'ora di fine in base alla prestazione selezionata
+    setOraFine(calculateEndTime(selectedTime, newDurata, selectedPrestazioniId));
   };
+  
 
   const handleChangeDate = (event) => {
     setSelectedDate(event.target.value);
@@ -156,10 +162,18 @@ const handleChange = () => {
   };
 
   // Calcola l'ora di fine a partire dall'ora di inizio e dalla durata (in minuti)
-  const calculateEndTime = (startTime, duration) => {
+  const calculateEndTime = (startTime, duration, selectedPrestazioneId) => {
     if (!startTime) return "";
+  
+    // Se la prestazione è "Rifiuto del paziente", l'ora di fine è uguale all'ora di inizio
+    if (selectedPrestazioneId === "rifiuto") {
+      return startTime;
+    }
+  
+    // Altrimenti, calcola l'ora di fine in base alla durata
     return moment(startTime, "HH:mm").add(duration, "minutes").format("HH:mm");
   };
+  
 
   //---------------------------------------------------------------
   const updateSummaryTab = async (dataToAdd) => {
@@ -251,7 +265,7 @@ const handleChange = () => {
     event.preventDefault();
   
     const newStart = selectedTime.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
-    const oraFine = calculateEndTime(selectedTime, durata);
+    const oraFine = calculateEndTime(selectedTime, durata, selectedPrestazioniId);
     const newEnd = oraFine.split(':').reduce((acc, t) => acc * 60 + parseInt(t), 0);
   
     const q = query(
@@ -504,22 +518,29 @@ const handleChange = () => {
                           )}
                         </div>
                         <Autocomplete
-                        className='mt-3'
-                        options={prestazioni}
+                        className="mt-3"
+                        options={[...prestazioni, { id: "rifiuto", prestazioni: "Rifiuto del paziente" }]} // Aggiungi l'opzione
                         loading={loadingAutoComplete}
                         getOptionLabel={(option) => `${option.prestazioni}`}
+                        value={
+                          prestazioni.find((p) => p.id === selectedPrestazioniId) ||
+                          (selectedPrestazioniId === "rifiuto" ? { id: "rifiuto", prestazioni: "Rifiuto del paziente" } : null)
+                        } // Gestisci il valore per "Rifiuto del paziente"
+                        onChange={(event, value) => {
+                          if (value) {
+                            setSelectedPrestazioniId(value.id);
+              
+                            // Aggiorna l'ora di fine in base alla prestazione selezionata
+                            setOraFine(calculateEndTime(selectedTime, durata, value.id));
+                          }
+                        }}
                         renderOption={(props, option) => (
                           <li {...props} key={option.id}>
                             <Box>
-                              <Typography variant="body1">
-                                {option.prestazioni}
-                              </Typography>
+                              <Typography variant="body1">{option.prestazioni}</Typography>
                             </Box>
                           </li>
                         )}
-                        onChange={(event, value) => {
-                          if (value) setSelectedPrestazioniId(value.id);
-                        }}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -533,7 +554,7 @@ const handleChange = () => {
                                   {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
                                   {params.InputProps.endAdornment}
                                 </>
-                              )
+                              ),
                             }}
                           />
                         )}
