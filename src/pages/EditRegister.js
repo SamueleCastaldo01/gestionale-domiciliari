@@ -142,7 +142,11 @@ export function EditRegister() {
   const handledurataChange = (event) => {
     const newDurata = event.target.value;
     setDurata(newDurata);
-    setSelectedTimeEnd(calculateEndTime(selectedTime, newDurata));
+
+    // Non aggiornare l'ora di fine se è selezionato "Rifiuto del paziente"
+    if (selectedPrestazioniId !== "rifiuto") {
+      setSelectedTimeEnd(calculateEndTime(selectedTime, newDurata));
+    }
   };
 
   const handleChangeDate = (event) => {
@@ -156,15 +160,9 @@ export function EditRegister() {
 
   const handleChangeTimeEnd = (event) => {
     const newTime = event.target.value;
-    // Converte l'orario in minuti (ore * 60 + minuti) per il confronto
-    const selectedTimeInMinutes = selectedTime.split(':').reduce((acc, time) => acc * 60 + parseInt(time), 0);
-    const newTimeInMinutes = newTime.split(':').reduce((acc, time) => acc * 60 + parseInt(time), 0);
-    
-    if (newTimeInMinutes < selectedTimeInMinutes) {
-      setSelectedTimeEnd(selectedTime);
-    } else {
-      setSelectedTimeEnd(newTime);
-    }
+
+    // Consenti sempre la modifica manuale dell'ora di fine
+    setSelectedTimeEnd(newTime);
   };
   
   //----------------------------------------------------------
@@ -241,34 +239,39 @@ export function EditRegister() {
     const { pazienteId, giorno } = newData;
     const oldDurata = oldData.durata;
     const newDurata = newData.durata;
-    
+
+    if (oldDurata === newDurata) {
+        return;
+    }
+
     const dateObj = new Date(giorno);
     const mese = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
-    
-    const summaryDocRef = doc(db, "summaryTab", `${pazienteId}_${mese}`);
-  
-    try {
-      const docSnap = await getDoc(summaryDocRef);
-  
-      if (docSnap.exists()) {
-        const summaryData = docSnap.data();
-        let updateData = {};
 
-        if (oldDurata === 30) updateData.count30 = Math.max((summaryData.count30 || 0) - 1, 0);
-        if (oldDurata === 45) updateData.count45 = Math.max((summaryData.count45 || 0) - 1, 0);
-        if (oldDurata === 60) updateData.count60 = Math.max((summaryData.count60 || 0) - 1, 0);
-  
-        if (newDurata === 30) updateData.count30 = (updateData.count30 || summaryData.count30 || 0) + 1;
-        if (newDurata === 45) updateData.count45 = (updateData.count45 || summaryData.count45 || 0) + 1;
-        if (newDurata === 60) updateData.count60 = (updateData.count60 || summaryData.count60 || 0) + 1;
-  
-        await updateDoc(summaryDocRef, updateData);
-      }
-  
+    const summaryDocRef = doc(db, "summaryTab", `${pazienteId}_${mese}`);
+
+    try {
+        const docSnap = await getDoc(summaryDocRef);
+
+        if (docSnap.exists()) {
+            const summaryData = docSnap.data();
+            let updateData = {};
+
+            // Rimuovi la vecchia durata
+            if (oldDurata === 30) updateData.count30 = Math.max((summaryData.count30 || 0) - 1, 0);
+            if (oldDurata === 45) updateData.count45 = Math.max((summaryData.count45 || 0) - 1, 0);
+            if (oldDurata === 60) updateData.count60 = Math.max((summaryData.count60 || 0) - 1, 0);
+
+            // Aggiungi la nuova durata
+            if (newDurata === 30) updateData.count30 = (updateData.count30 || summaryData.count30 || 0) + 1;
+            if (newDurata === 45) updateData.count45 = (updateData.count45 || summaryData.count45 || 0) + 1;
+            if (newDurata === 60) updateData.count60 = (updateData.count60 || summaryData.count60 || 0) + 1;
+
+            await updateDoc(summaryDocRef, updateData);
+        }
     } catch (error) {
-      console.error("Errore nell'aggiornare summaryTab:", error);
+        console.error("Errore nell'aggiornare summaryTab:", error);
     }
-  };
+};
   //----------------------------------------------------------
   const updateSummaryTabOnDelete = async (oldData) => {
     const { pazienteId, giorno, durata: oldDurata } = oldData;
@@ -473,19 +476,30 @@ export function EditRegister() {
               {/* Autocomplete per la selezione della prestazione */}
               <div className="mt-4 col-lg-4 col-md-6 col-sm-12">
                 <Autocomplete
-                  options={prestazioni}
+                  options={[...prestazioni, { id: "rifiuto", prestazioni: "Rifiuto del paziente" }]} // Aggiungi l'opzione
                   loading={loadingAutoComplete}
-                  getOptionLabel={(option) => `${option.prestazioni}`}
-                  value={prestazioni.find(p => p.id === selectedPrestazioniId) || null}
+                  getOptionLabel={(option) => option.prestazioni || ""} // Mostra il nome della prestazione
+                  value={
+                    prestazioni.find((p) => p.id === selectedPrestazioniId) || 
+                    (selectedPrestazioniId === "rifiuto" ? { id: "rifiuto", prestazioni: "Rifiuto del paziente" } : null)
+                  } // Gestisci il valore per "Rifiuto del paziente"
                   onChange={(event, value) => {
-                    if (value) setSelectedPrestazioniId(value.id);
+                    if (value) {
+                      setSelectedPrestazioniId(value.id);
+      
+                      // Se viene selezionato "Rifiuto del paziente", imposta ora fine uguale a ora inizio
+                      if (value.id === "rifiuto") {
+                        setSelectedTimeEnd(selectedTime); // Ora fine uguale a ora inizio
+                      } else {
+                        // Se si torna a un'altra prestazione, aggiorna l'ora di fine in base alla durata attuale
+                        setSelectedTimeEnd(calculateEndTime(selectedTime, durata));
+                      }
+                    }
                   }}
                   renderOption={(props, option) => (
                     <li {...props} key={option.id}>
                       <Box>
-                        <Typography variant="body1">
-                          {option.prestazioni}
-                        </Typography>
+                        <Typography variant="body1">{option.prestazioni}</Typography>
                       </Box>
                     </li>
                   )}
@@ -502,7 +516,7 @@ export function EditRegister() {
                             {loadingAutoComplete ? <CircularProgress color="inherit" size={20} /> : null}
                             {params.InputProps.endAdornment}
                           </>
-                        )
+                        ),
                       }}
                     />
                   )}
